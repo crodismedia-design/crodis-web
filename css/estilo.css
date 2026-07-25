@@ -821,6 +821,23 @@ select {
 .campo-formulario input:focus, .campo-formulario textarea:focus, .campo-formulario select:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(20, 87, 217, .12); }
 .campo-opcional { color: var(--texto-suave); font-weight: 600; }
 .campo-ayuda { color: var(--texto-suave); font-size: 11px; line-height: 1.45; }
+.campo-estado { color: var(--texto-suave); font-size: 11px; line-height: 1.45; }
+.campo-estado-exito { color: #08734a; font-weight: 700; }
+.campo-estado-error { color: #9f1f1f; font-weight: 700; }
+.campo-estado-cargando { color: #7a4b00; font-weight: 700; }
+.campo-email-verificacion { align-content: start; }
+.verificacion-email-acciones { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.boton-verificar-email { padding: 10px 14px; font-size: 12px; }
+.boton-verificar-email:disabled { cursor: wait; opacity: .7; transform: none; }
+.boton-cambiar-email, .horarios-acciones .boton-enlace {
+    padding: 0;
+    color: var(--azul);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-decoration: underline;
+}
+.campo-email-verificado input { color: #176343; background: #eefaf4; border-color: #a9e2c9; }
 .campo-fotos input[type="file"] { padding: 10px; cursor: pointer; }
 .campo-fotos input[type="file"]::file-selector-button { margin-right: 12px; padding: 9px 12px; color: #0d57b7; font-weight: 800; background: #edf5ff; border: 1px solid #c8dcfa; border-radius: 8px; cursor: pointer; }
 .campo-fotos .aceptacion-fotos { display: flex; align-items: flex-start; gap: 9px; padding: 11px; color: #40536f; font-size: 12px; font-weight: 600; line-height: 1.45; background: #f8fbff; border: 1px solid var(--borde); border-radius: 9px; }
@@ -850,6 +867,10 @@ select {
 .aceptacion-condiciones input { flex: 0 0 auto; width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--azul); }
 .aceptacion-condiciones a, .condiciones-contenido a { color: var(--azul); font-weight: 800; text-decoration: underline; }
 .aceptacion-condiciones p { margin: 0; color: #68758a; font-size: 12px; line-height: 1.5; }
+.resumen-privacidad { margin-bottom: 5px; padding: 13px; background: white; border: 1px solid var(--borde); border-radius: 9px; }
+.resumen-privacidad > strong { display: block; margin-bottom: 6px; color: var(--azul-oscuro); font-size: 13px; }
+.resumen-privacidad p { color: #40536f; }
+.campo-trampa { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
 .condiciones-principal { padding: 72px 0; }
 .condiciones-contenido { width: min(820px, calc(100% - 40px)); padding: 44px; background: var(--blanco); border: 1px solid var(--borde); border-radius: 22px; box-shadow: var(--sombra); }
 .condiciones-contenido h1 { margin: 15px 0; color: var(--azul-oscuro); font-size: clamp(38px, 5vw, 56px); letter-spacing: -2.5px; }
@@ -1115,6 +1136,20 @@ select {
     box-shadow: none;
 }
 
+.cta-cartel { padding: 80px 0; }
+.cta-cartel-contenido { align-items: center; display: grid; gap: clamp(38px, 6vw, 80px); grid-template-columns: minmax(280px, 440px) 1fr; }
+.cta-cartel-imagen { border: 1px solid rgba(255,255,255,.2); border-radius: 24px; box-shadow: 0 28px 70px rgba(0,0,0,.38); display: block; overflow: hidden; transform: rotate(-1deg); transition: transform .25s ease, box-shadow .25s ease; }
+.cta-cartel-imagen:hover { box-shadow: 0 34px 90px rgba(0,0,0,.48); transform: rotate(0deg) translateY(-4px); }
+.cta-cartel-imagen img { display: block; height: auto; width: 100%; }
+.cta-cartel-texto h2 { font-size: clamp(2.4rem, 5vw, 4.4rem); line-height: 1; margin: 12px 0 20px; }
+.cta-cartel-texto p { font-size: 1.05rem; max-width: 680px; }
+.cta-cartel-texto ul { display: grid; gap: 12px; list-style: none; margin: 26px 0 32px; padding: 0; }
+.cta-cartel-texto li { color: #fff; font-weight: 750; padding-left: 28px; position: relative; }
+.cta-cartel-texto li::before { color: #ff7a00; content: "✓"; font-size: 1.1rem; font-weight: 900; left: 0; position: absolute; top: -1px; }
+.cta-cartel-acciones { display: flex; flex-wrap: wrap; gap: 12px; }
+.boton-whatsapp { background: #19a957; box-shadow: 0 12px 28px rgba(25,169,87,.25); color: #fff; }
+.boton-whatsapp:hover { background: #138c48; }
+
 .pie {
     padding: 65px 0 25px;
     color: #adbbce;
@@ -1297,6 +1332,13 @@ select {
         flex-direction: column;
     }
 
+    .cta-cartel-contenido { grid-template-columns: 1fr; }
+    .cta-cartel-imagen { margin: 0 auto; max-width: 480px; transform: none; }
+    .cta-cartel-texto { text-align: center; }
+    .cta-cartel-texto p { margin-left: auto; margin-right: auto; }
+    .cta-cartel-texto li { display: inline-block; text-align: left; }
+    .cta-cartel-acciones { justify-content: center; }
+
     .cta h2 {
         font-size: 33px;
     }
@@ -1403,6 +1445,8 @@ select {
 
 .horarios-formulario { border: 0; margin: 8px 0; padding: 0; }
 .horarios-formulario legend { color: #10223b; font-weight: 800; margin-bottom: 8px; }
+.horarios-acciones { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 10px 0; }
+.horarios-acciones .boton-enlace { font-size: .78rem; font-weight: 700; }
 .horarios-cabecera, .horario-fila { align-items: center; display: grid; gap: 10px; grid-template-columns: 110px repeat(4, minmax(0, 1fr)); }
 .horarios-cabecera { color: #637084; font-size: .76rem; font-weight: 800; padding: 10px 12px; text-transform: uppercase; }
 .lista-horarios { border: 1px solid #dce3ec; border-radius: 14px; overflow: hidden; }

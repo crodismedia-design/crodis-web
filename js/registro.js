@@ -8,6 +8,18 @@
     const vistaPreviaFotos = document.getElementById("vista-previa-fotos");
     const campoCondicionesFotos = document.getElementById("acepta_condiciones_fotos");
     const listaHorarios = document.getElementById("lista-horarios");
+    const campoEmail = document.getElementById("email");
+    const botonVerificarEmail = document.getElementById("boton-verificar-email");
+    const botonCambiarEmail = document.getElementById("boton-cambiar-email");
+    const estadoVerificacionEmail = document.getElementById("estado-verificacion-email");
+    const campoCodigoPostal = document.getElementById("codigo_postal");
+    const campoCiudad = document.getElementById("ciudad");
+    const campoProvincia = document.getElementById("provincia");
+    const estadoLocalidad = document.getElementById("estado-localidad");
+    const listaLocalidades = document.getElementById("localidades-codigo-postal");
+    const campoWeb = document.getElementById("web");
+    const CLAVE_BORRADOR = "tallermap-borrador-alta";
+    const DURACION_BORRADOR = 30 * 60 * 1000;
     const DIAS_SEMANA = [
         ["lunes", "Lunes"], ["martes", "Martes"], ["miercoles", "Miércoles"],
         ["jueves", "Jueves"], ["viernes", "Viernes"], ["sabado", "Sábado"],
@@ -17,6 +29,9 @@
     const MAXIMO_FOTOS = 5;
     const MAXIMO_BYTES_FOTO = 5 * 1024 * 1024;
     let urlsVistaPrevia = [];
+    let sesionVerificada = null;
+    let temporizadorCodigoPostal = null;
+    const localidadesPorCodigo = new Map();
 
     if (!formulario || !botonEnviar || !mensajeFormulario) {
         console.error("El formulario de registro no está completo en la página.");
@@ -25,6 +40,17 @@
 
     function valor(idCampo) {
         return document.getElementById(idCampo)?.value.trim() || "";
+    }
+
+    function normalizarTexto(valorTexto) {
+        return String(valorTexto || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLocaleLowerCase("es")
+            .replace(/[^a-z0-9]+/g, " ")
+            .replace(/\b(el|la|los|las)\b/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
     }
 
     function normalizarWeb(web) {
@@ -41,6 +67,35 @@
         } catch (_error) {
             return false;
         }
+    }
+
+    function documentoFiscalValido(documento) {
+        const limpio = String(documento || "").toUpperCase().replace(/[\s.-]/g, "");
+        const letrasNif = "TRWAGMYFPDXBNJZSQVHLCKE";
+        const nif = limpio.match(/^(\d{8})([A-Z])$/);
+        if (nif) {
+            return letrasNif[Number(nif[1]) % 23] === nif[2];
+        }
+
+        const nie = limpio.match(/^([XYZ])(\d{7})([A-Z])$/);
+        if (nie) {
+            const prefijo = { X: "0", Y: "1", Z: "2" }[nie[1]];
+            return letrasNif[Number(`${prefijo}${nie[2]}`) % 23] === nie[3];
+        }
+
+        const cif = limpio.match(/^([ABCDEFGHJNPQRSUVW])(\d{7})([0-9A-J])$/);
+        if (!cif) return false;
+        const numeros = cif[2].split("").map(Number);
+        const sumaPares = numeros[1] + numeros[3] + numeros[5];
+        const sumaImpares = [numeros[0], numeros[2], numeros[4], numeros[6]]
+            .map((numero) => numero * 2)
+            .reduce((total, numero) => total + Math.floor(numero / 10) + numero % 10, 0);
+        const controlNumero = (10 - (sumaPares + sumaImpares) % 10) % 10;
+        const controlLetra = "JABCDEFGHI"[controlNumero];
+        const control = cif[3];
+        if ("ABEH".includes(cif[1])) return control === String(controlNumero);
+        if ("KPQS".includes(cif[1])) return control === controlLetra;
+        return control === String(controlNumero) || control === controlLetra;
     }
 
     function serviciosSeleccionados() {
@@ -98,6 +153,40 @@
         cierre2.disabled = !apertura2.value;
         cierre2.required = Boolean(apertura2.value);
         if (!apertura2.value) cierre2.value = "";
+    }
+
+    function copiarHorarioFila(origen, destino) {
+        const turnos = ["apertura-1", "cierre-1", "apertura-2", "cierre-2"];
+        turnos.forEach((turno) => {
+            const campoOrigen = origen?.querySelector(`[data-turno="${turno}"]`);
+            const campoDestino = destino?.querySelector(`[data-turno="${turno}"]`);
+            if (campoOrigen && campoDestino) campoDestino.value = campoOrigen.value;
+        });
+        if (destino) actualizarFilaHorario(destino);
+    }
+
+    function copiarLunesALaborables() {
+        const lunes = listaHorarios?.querySelector('[data-dia="lunes"]');
+        const apertura = lunes?.querySelector('[data-turno="apertura-1"]')?.value;
+        if (!apertura) {
+            mostrarMensaje("Selecciona primero el horario del lunes.", "error");
+            lunes?.querySelector('[data-turno="apertura-1"]')?.focus();
+            return;
+        }
+        ["martes", "miercoles", "jueves", "viernes"].forEach((dia) => {
+            copiarHorarioFila(lunes, listaHorarios?.querySelector(`[data-dia="${dia}"]`));
+        });
+        ocultarMensaje();
+    }
+
+    function cerrarFinDeSemana() {
+        ["sabado", "domingo"].forEach((dia) => {
+            const fila = listaHorarios?.querySelector(`[data-dia="${dia}"]`);
+            const apertura = fila?.querySelector('[data-turno="apertura-1"]');
+            if (apertura) apertura.value = "cerrado";
+            if (fila) actualizarFilaHorario(fila);
+        });
+        ocultarMensaje();
     }
 
     function horariosSeleccionados() {
@@ -169,6 +258,276 @@
     function cambiarEstadoBoton(enviando, texto = "Enviando...") {
         botonEnviar.disabled = enviando;
         botonEnviar.textContent = enviando ? texto : "Enviar alta gratuita";
+    }
+
+    function mostrarEstadoCampo(elemento, texto, tipo = "") {
+        if (!elemento) return;
+        elemento.textContent = texto;
+        elemento.className = `campo-estado${tipo ? ` campo-estado-${tipo}` : ""}`;
+    }
+
+    function guardarBorrador() {
+        try {
+            const ids = [
+                "nombre_taller", "propietario", "cif", "email", "telefono",
+                "web", "direccion", "codigo_postal", "ciudad", "provincia",
+                "descripcion", "acepta_privacidad", "acepta_responsabilidad"
+            ];
+            const campos = Object.fromEntries(ids.map((id) => {
+                const elemento = document.getElementById(id);
+                return [id, elemento?.type === "checkbox" ? Boolean(elemento.checked) : elemento?.value || ""];
+            }));
+            const horarios = Array.from(
+                listaHorarios?.querySelectorAll("select") || [],
+                (select) => select.value
+            );
+            localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({
+                guardadoAt: Date.now(),
+                campos,
+                servicios: serviciosSeleccionados(),
+                horarios
+            }));
+        } catch (error) {
+            console.warn("No se pudo conservar temporalmente el formulario:", error);
+        }
+    }
+
+    function restaurarBorrador() {
+        try {
+            const texto = localStorage.getItem(CLAVE_BORRADOR);
+            if (!texto) return;
+            localStorage.removeItem(CLAVE_BORRADOR);
+            const borrador = JSON.parse(texto);
+            if (!borrador?.guardadoAt || Date.now() - borrador.guardadoAt > DURACION_BORRADOR) return;
+
+            Object.entries(borrador.campos || {}).forEach(([id, valorCampo]) => {
+                const elemento = document.getElementById(id);
+                if (!elemento || id === "email" && sesionVerificada?.user?.email) return;
+                if (elemento.type === "checkbox") elemento.checked = Boolean(valorCampo);
+                else elemento.value = String(valorCampo || "");
+            });
+            const servicios = new Set(borrador.servicios || []);
+            formulario.querySelectorAll('input[name="servicios"]').forEach((campo) => {
+                campo.checked = servicios.has(campo.value);
+            });
+            const selectsHorario = listaHorarios?.querySelectorAll("select") || [];
+            selectsHorario.forEach((select, indice) => {
+                select.value = borrador.horarios?.[indice] || "";
+            });
+            listaHorarios?.querySelectorAll("[data-dia]").forEach(actualizarFilaHorario);
+            if (campoFotos) campoFotos.value = "";
+            if (campoCondicionesFotos) {
+                campoCondicionesFotos.checked = false;
+                campoCondicionesFotos.disabled = true;
+                campoCondicionesFotos.required = false;
+            }
+        } catch (error) {
+            localStorage.removeItem(CLAVE_BORRADOR);
+            console.warn("No se pudo restaurar el formulario temporal:", error);
+        }
+    }
+
+    function aplicarSesionVerificada(session) {
+        sesionVerificada = session || null;
+        const emailSesion = String(session?.user?.email || "").trim().toLowerCase();
+        const contenedor = campoEmail?.closest(".campo-email-verificacion");
+
+        if (emailSesion) {
+            campoEmail.value = emailSesion;
+            campoEmail.readOnly = true;
+            contenedor?.classList.add("campo-email-verificado");
+            if (botonVerificarEmail) botonVerificarEmail.hidden = true;
+            if (botonCambiarEmail) botonCambiarEmail.hidden = false;
+            mostrarEstadoCampo(
+                estadoVerificacionEmail,
+                `✓ Correo verificado: ${emailSesion}`,
+                "exito"
+            );
+            return;
+        }
+
+        campoEmail.readOnly = false;
+        contenedor?.classList.remove("campo-email-verificado");
+        if (botonVerificarEmail) botonVerificarEmail.hidden = false;
+        if (botonCambiarEmail) botonCambiarEmail.hidden = true;
+        mostrarEstadoCampo(
+            estadoVerificacionEmail,
+            "Antes de publicar te enviaremos un enlace para confirmar que este correo es tuyo."
+        );
+    }
+
+    async function comprobarSesionRegistro() {
+        if (!window.supabaseClient?.auth) return;
+        const { data, error } = await window.supabaseClient.auth.getSession();
+        if (error) {
+            console.error("No se pudo comprobar la sesión de registro:", error);
+            return;
+        }
+        aplicarSesionVerificada(data.session);
+        if (data.session) restaurarBorrador();
+    }
+
+    async function enviarVerificacionEmail() {
+        const email = campoEmail?.value.trim().toLowerCase() || "";
+        if (!email || !campoEmail.checkValidity()) {
+            mostrarMensaje("Escribe primero un correo electrónico válido.", "error");
+            campoEmail?.focus();
+            return;
+        }
+        if (!window.supabaseClient?.auth) {
+            mostrarMensaje("No se ha podido conectar con el servicio de verificación.", "error");
+            return;
+        }
+
+        guardarBorrador();
+        botonVerificarEmail.disabled = true;
+        botonVerificarEmail.textContent = "Enviando enlace...";
+        mostrarEstadoCampo(estadoVerificacionEmail, "Preparando el correo de verificación…", "cargando");
+
+        const destino = new URL("registro.html?correo=verificado", window.location.href).href;
+        const { error } = await window.supabaseClient.auth.signInWithOtp({
+            email,
+            options: {
+                emailRedirectTo: destino,
+                shouldCreateUser: true
+            }
+        });
+
+        botonVerificarEmail.disabled = false;
+        botonVerificarEmail.textContent = "Verificar correo";
+        if (error) {
+            console.error("No se pudo enviar la verificación:", error);
+            mostrarEstadoCampo(
+                estadoVerificacionEmail,
+                "No se pudo enviar el enlace. Espera un minuto y vuelve a intentarlo.",
+                "error"
+            );
+            return;
+        }
+        mostrarEstadoCampo(
+            estadoVerificacionEmail,
+            "Enlace enviado. Abre tu correo, pulsa el enlace y volverás al formulario. Las fotografías deberán seleccionarse de nuevo.",
+            "exito"
+        );
+    }
+
+    async function cambiarEmailVerificado() {
+        if (!window.supabaseClient?.auth) return;
+        await window.supabaseClient.auth.signOut();
+        aplicarSesionVerificada(null);
+        campoEmail.value = "";
+        campoEmail.focus();
+    }
+
+    async function consultarLocalidades(codigoPostal) {
+        if (localidadesPorCodigo.has(codigoPostal)) {
+            return localidadesPorCodigo.get(codigoPostal);
+        }
+        const controlador = new AbortController();
+        const limite = setTimeout(() => controlador.abort(), 9000);
+        try {
+            const respuesta = await fetch(
+                `https://api.zippopotam.us/ES/${encodeURIComponent(codigoPostal)}`,
+                { headers: { Accept: "application/json" }, signal: controlador.signal }
+            );
+            if (respuesta.status === 404) {
+                localidadesPorCodigo.set(codigoPostal, []);
+                return [];
+            }
+            if (!respuesta.ok) throw new Error(`postal-${respuesta.status}`);
+            const datos = await respuesta.json();
+            const localidades = [...new Set((datos.places || [])
+                .map((lugar) => String(lugar["place name"] || "").trim())
+                .filter(Boolean))];
+            localidadesPorCodigo.set(codigoPostal, localidades);
+            return localidades;
+        } finally {
+            clearTimeout(limite);
+        }
+    }
+
+    function rellenarLocalidades(localidades) {
+        if (!listaLocalidades) return;
+        listaLocalidades.replaceChildren();
+        localidades.forEach((localidad) => {
+            const opcion = document.createElement("option");
+            opcion.value = localidad;
+            listaLocalidades.appendChild(opcion);
+        });
+    }
+
+    async function comprobarCodigoPostal(completarCiudad = true) {
+        const codigoPostal = campoCodigoPostal?.value.trim() || "";
+        if (!/^[0-9]{5}$/.test(codigoPostal)) {
+            rellenarLocalidades([]);
+            mostrarEstadoCampo(
+                estadoLocalidad,
+                "El código postal debe tener exactamente cinco números.",
+                codigoPostal ? "error" : ""
+            );
+            return null;
+        }
+
+        mostrarEstadoCampo(estadoLocalidad, "Comprobando código postal y población…", "cargando");
+        try {
+            const localidades = await consultarLocalidades(codigoPostal);
+            rellenarLocalidades(localidades);
+            if (!localidades.length) {
+                mostrarEstadoCampo(
+                    estadoLocalidad,
+                    "No encontramos ese código postal en España.",
+                    "error"
+                );
+                return [];
+            }
+            if (completarCiudad && campoCiudad && !campoCiudad.value.trim()) {
+                campoCiudad.value = localidades[0];
+            }
+            mostrarEstadoCampo(
+                estadoLocalidad,
+                localidades.length === 1
+                    ? `✓ Código postal correspondiente a ${localidades[0]}.`
+                    : `✓ Poblaciones admitidas: ${localidades.join(", ")}.`,
+                "exito"
+            );
+            return localidades;
+        } catch (error) {
+            console.error("No se pudo comprobar el código postal:", error);
+            mostrarEstadoCampo(
+                estadoLocalidad,
+                "No se pudo comprobar ahora la población. Revisa tu conexión e inténtalo de nuevo.",
+                "error"
+            );
+            return null;
+        }
+    }
+
+    async function validarLocalidadCodigoPostal(codigoPostal, ciudad) {
+        const localidades = await comprobarCodigoPostal(false);
+        if (!localidades?.length) {
+            mostrarMensaje(
+                "No podemos confirmar la población para ese código postal. Revísalo o inténtalo de nuevo.",
+                "error"
+            );
+            campoCodigoPostal?.focus();
+            return false;
+        }
+        const ciudadNormalizada = normalizarTexto(ciudad);
+        const coincide = localidades.some((localidad) => {
+            const localidadNormalizada = normalizarTexto(localidad);
+            return ciudadNormalizada === localidadNormalizada
+                || ciudadNormalizada.includes(localidadNormalizada)
+                || localidadNormalizada.includes(ciudadNormalizada);
+        });
+        if (!coincide) {
+            mostrarMensaje(
+                `La población «${ciudad}» no coincide con el código postal ${codigoPostal}. Selecciona una de las poblaciones sugeridas.`,
+                "error"
+            );
+            campoCiudad?.focus();
+            return false;
+        }
+        return true;
     }
 
     function fotosSeleccionadas() {
@@ -249,6 +608,7 @@
 
     async function subirFotos(subidas) {
         const fallidas = [];
+        const correctas = [];
         for (const subida of subidas) {
             const { error } = await window.supabaseClient.storage
                 .from("fotos-talleres")
@@ -260,9 +620,11 @@
             if (error) {
                 console.error("No se pudo subir una fotografía:", error);
                 fallidas.push(subida.ruta);
+            } else {
+                correctas.push(subida.ruta);
             }
         }
-        return fallidas;
+        return { correctas, fallidas };
     }
 
     function validar(datos) {
@@ -276,8 +638,8 @@
             enfocar("propietario");
             return false;
         }
-        if (datos.cif.length < 7) {
-            mostrarMensaje("Escribe un CIF o NIF válido.", "error");
+        if (!documentoFiscalValido(datos.cif)) {
+            mostrarMensaje("El CIF, NIF o NIE no tiene un formato o dígito de control válido.", "error");
             enfocar("cif");
             return false;
         }
@@ -336,6 +698,11 @@
             enfocar("descripcion");
             return false;
         }
+        if (!datos.acepta_privacidad) {
+            mostrarMensaje("Debes leer y aceptar la política de privacidad.", "error");
+            enfocar("acepta_privacidad");
+            return false;
+        }
         if (!datos.acepta_responsabilidad) {
             mostrarMensaje("Debes aceptar las condiciones de publicación.", "error");
             enfocar("acepta_responsabilidad");
@@ -348,13 +715,22 @@
         const detalle = String(error?.message || "").toLowerCase();
 
         if (error?.code === "42501" || detalle.includes("permission denied")) {
-            return "La base de datos no permite guardar la solicitud. Hay que aplicar la configuración RLS de TallerMap en Supabase.";
+            return "No se permite publicar sin un correo verificado o falta aplicar formulario_seguro.sql en Supabase.";
         }
         if (detalle.includes("row-level security")) {
             return "La solicitud ha sido bloqueada por la política de seguridad de Supabase.";
         }
         if (error?.code === "23505" || detalle.includes("duplicate")) {
             return "Ya existe una solicitud con esos datos.";
+        }
+        if (detalle.includes("limite_altas") || detalle.includes("demasiadas altas")) {
+            return "Has alcanzado el límite de tres altas en 24 horas. Si gestionas más talleres, contacta con TallerMap.";
+        }
+        if (detalle.includes("correo_no_verificado")) {
+            return "Debes verificar el correo antes de publicar.";
+        }
+        if (detalle.includes("localidad_no_verificada")) {
+            return "La población no coincide con el código postal indicado.";
         }
         if (detalle.includes("provincia_codigo_postal")) {
             return "La provincia seleccionada no coincide con el código postal.";
@@ -395,7 +771,9 @@
         for (let intento = 0; intento < 5; intento += 1) {
             resultado = await window.supabaseClient
                 .from("solicitudes_alta_taller")
-                .insert([datosCompatibles]);
+                .insert([datosCompatibles])
+                .select("id")
+                .single();
 
             if (!resultado.error) return resultado;
 
@@ -409,10 +787,6 @@
         return resultado;
     }
 
-    const campoCodigoPostal = document.getElementById("codigo_postal");
-    const campoProvincia = document.getElementById("provincia");
-    const campoWeb = document.getElementById("web");
-
     crearCamposHorarios();
     listaHorarios?.addEventListener("change", (evento) => {
         const fila = evento.target.closest("[data-dia]");
@@ -420,17 +794,41 @@
     });
 
     campoCodigoPostal?.addEventListener("input", () => {
+        clearTimeout(temporizadorCodigoPostal);
+        localidadesPorCodigo.delete(campoCodigoPostal.value);
+        rellenarLocalidades([]);
         if (/^[0-9]{5}$/.test(campoCodigoPostal.value)) {
             window.TallerMapProvincias?.seleccionarSegunCodigo(
                 campoCodigoPostal.value,
                 campoProvincia
             );
+            temporizadorCodigoPostal = setTimeout(() => comprobarCodigoPostal(true), 350);
+        } else {
+            mostrarEstadoCampo(
+                estadoLocalidad,
+                "Escribe primero el código postal para comprobar las poblaciones correspondientes."
+            );
+        }
+    });
+
+    campoCiudad?.addEventListener("blur", () => {
+        if (/^[0-9]{5}$/.test(campoCodigoPostal?.value || "")) {
+            comprobarCodigoPostal(false);
         }
     });
 
     campoWeb?.addEventListener("blur", () => {
         campoWeb.value = normalizarWeb(campoWeb.value);
     });
+
+    document.getElementById("cif")?.addEventListener("blur", (evento) => {
+        evento.target.value = evento.target.value.toUpperCase().replace(/\s+/g, "");
+    });
+
+    botonVerificarEmail?.addEventListener("click", enviarVerificacionEmail);
+    botonCambiarEmail?.addEventListener("click", cambiarEmailVerificado);
+    document.getElementById("copiar-horario-laborables")?.addEventListener("click", copiarLunesALaborables);
+    document.getElementById("cerrar-fin-semana")?.addEventListener("click", cerrarFinDeSemana);
 
     campoFotos?.addEventListener("change", () => {
         ocultarMensaje();
@@ -457,7 +855,20 @@
         evento.preventDefault();
         ocultarMensaje();
 
+        if (valor("empresa_url")) {
+            mostrarMensaje("Alta recibida correctamente.", "exito");
+            return;
+        }
+
         if (campoWeb) campoWeb.value = normalizarWeb(campoWeb.value);
+
+        const emailSesion = String(sesionVerificada?.user?.email || "").trim().toLowerCase();
+        const emailFormulario = valor("email").toLowerCase();
+        if (!emailSesion || emailSesion !== emailFormulario) {
+            mostrarMensaje("Verifica este correo antes de completar y publicar el taller.", "error");
+            campoEmail?.focus();
+            return;
+        }
 
         if (!formulario.checkValidity()) {
             formulario.reportValidity();
@@ -486,12 +897,17 @@
             version_condiciones_fotos: subidas.length ? "1.0" : null,
             descripcion: valor("descripcion"),
             estado: "aprobada",
+            localidad_verificada: true,
+            acepta_privacidad: document.getElementById("acepta_privacidad").checked,
+            acepta_privacidad_at: new Date().toISOString(),
+            version_privacidad: "1.0",
             acepta_responsabilidad: document.getElementById("acepta_responsabilidad").checked,
             acepta_terminos_at: new Date().toISOString(),
             version_terminos: "1.0"
         };
 
         if (!validar(datos)) return;
+        if (!await validarLocalidadCodigoPostal(datos.codigo_postal, datos.ciudad)) return;
 
         if (!window.supabaseClient?.from) {
             mostrarMensaje("No se ha podido conectar con la base de datos.", "error");
@@ -500,7 +916,7 @@
 
         cambiarEstadoBoton(true);
         try {
-            const { error } = await insertarSolicitud(datos);
+            const { data: solicitud, error } = await insertarSolicitud(datos);
             if (error) {
                 console.error("Error al registrar la solicitud:", error);
                 mostrarMensaje(mensajeErrorSupabase(error), "error");
@@ -510,7 +926,20 @@
             let fotosFallidas = [];
             if (subidas.length) {
                 cambiarEstadoBoton(true, "Subiendo fotos...");
-                fotosFallidas = await subirFotos(subidas);
+                const resultadoFotos = await subirFotos(subidas);
+                fotosFallidas = resultadoFotos.fallidas;
+                if (fotosFallidas.length && solicitud?.id) {
+                    const { error: errorSincronizacion } = await window.supabaseClient.rpc(
+                        "actualizar_fotos_solicitud",
+                        {
+                            p_solicitud_id: solicitud.id,
+                            p_fotos: resultadoFotos.correctas
+                        }
+                    );
+                    if (errorSincronizacion) {
+                        console.error("No se pudieron retirar las rutas de fotos fallidas:", errorSincronizacion);
+                    }
+                }
             }
 
             formulario.reset();
@@ -520,6 +949,8 @@
                 campoCondicionesFotos.required = false;
             }
             limpiarVistaPrevia();
+            localStorage.removeItem(CLAVE_BORRADOR);
+            if (campoEmail && emailSesion) campoEmail.value = emailSesion;
             if (fotosFallidas.length) {
                 mostrarMensaje(
                     "El alta se ha guardado, pero algunas fotografías no pudieron subirse. La ficha continuará sin esas imágenes.",
@@ -538,4 +969,13 @@
             cambiarEstadoBoton(false);
         }
     });
+
+    window.supabaseClient?.auth?.onAuthStateChange((_evento, session) => {
+        aplicarSesionVerificada(session);
+    });
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", comprobarSesionRegistro);
+    } else {
+        comprobarSesionRegistro();
+    }
 }());

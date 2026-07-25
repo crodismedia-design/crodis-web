@@ -44,6 +44,8 @@
             ["Dirección", solicitud.direccion], ["Código postal", solicitud.codigo_postal],
             ["Ciudad", solicitud.ciudad], ["Provincia", solicitud.provincia], ["Servicios", servicios],
             ["Horario semanal", formatoHorario(solicitud.horarios)],
+            ["Correo verificado", solicitud.usuario_id ? "Sí" : "Registro anterior"],
+            ["Privacidad aceptada", solicitud.acepta_privacidad ? "Sí" : "No consta"],
             ["Condiciones aceptadas", solicitud.acepta_responsabilidad ? "Sí" : "No"],
             ["Condiciones de fotos", Array.isArray(solicitud.fotos) && solicitud.fotos.length
                 ? (solicitud.acepta_condiciones_fotos ? "Sí" : "No")
@@ -88,7 +90,7 @@
         lista.innerHTML = '<p class="mensaje-talleres">Cargando solicitudes…</p>';
         let resultado = await window.supabaseClient
             .from("solicitudes_alta_taller")
-            .select("id,nombre_taller,propietario,cif,email,telefono,web,direccion,codigo_postal,ciudad,provincia,horarios,servicios,fotos,descripcion,estado,acepta_responsabilidad,acepta_condiciones_fotos,acepta_condiciones_fotos_at,created_at")
+            .select("id,nombre_taller,propietario,cif,email,telefono,web,direccion,codigo_postal,ciudad,provincia,horarios,servicios,fotos,descripcion,estado,usuario_id,acepta_privacidad,acepta_privacidad_at,acepta_responsabilidad,acepta_condiciones_fotos,acepta_condiciones_fotos_at,created_at")
             .eq("estado", "aprobada")
             .order("created_at", { ascending: false });
         if (resultado.error?.code === "42703" && String(resultado.error.message || "").includes("horarios")) {

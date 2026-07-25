@@ -98,7 +98,10 @@
         }
     ];
 
-    const etiquetas = Object.fromEntries(grupos.flatMap((grupo) => grupo.servicios));
+    const etiquetas = Object.fromEntries(
+        grupos.flatMap((grupo) => grupo.servicios)
+    );
+
     const iconos = {
         "Mecánica y mantenimiento": "⚙",
         "Neumáticos, dirección y suspensión": "◉",
@@ -206,7 +209,7 @@
         rellenarTarjetas(document.getElementById("lista-servicios-publicos"));
     }
 
-    globalThis.TallerMapServicios = {
+    window.TallerMapServicios = {
         grupos,
         etiquetas,
         serviciosAlfabeticos,

@@ -11,6 +11,7 @@ El buscador utiliza la población como criterio principal. Opcionalmente, el vis
 - `pages/admin-login.html`: acceso privado de administración.
 - `pages/admin.html`: revisión posterior y retirada de fichas publicadas.
 - `pages/condiciones-fotografias.html`: condiciones adicionales para imágenes opcionales.
+- `pages/privacidad.html`: información sobre el tratamiento de datos personales.
 - `css/estilo.css`: estilos compartidos y adaptación móvil.
 - `js/`: conexión con Supabase y lógica de la web.
 - `js/servicios.js`: catálogo compartido por el buscador y el formulario de alta.
@@ -21,6 +22,7 @@ El buscador utiliza la población como criterio principal. Opcionalmente, el vis
 - `supabase/alta_automatica_espana.sql`: activa la publicación automática y gratuita en toda España.
 - `supabase/fotos_opcionales_taller.sql`: crea el almacenamiento privado y las políticas para un máximo de cinco fotografías.
 - `supabase/horarios_obligatorios.sql`: añade el horario semanal obligatorio y lo publica en cada ficha.
+- `supabase/formulario_seguro.sql`: exige correo verificado, limita altas abusivas, valida CIF/NIF y horarios, registra la aceptación de privacidad y corrige fotografías fallidas.
 
 ## Configuración de Supabase
 
@@ -37,9 +39,11 @@ Para permitir fotografías opcionales, ejecuta una sola vez `supabase/fotos_opci
 
 Para exigir y mostrar el horario semanal, ejecuta una sola vez `supabase/horarios_obligatorios.sql`. Cada día admite un turno principal, un segundo turno opcional o la opción «Cerrado».
 
-Todas las altas de España se publican automáticamente como fichas activas no verificadas. Una cuenta incluida en `public.administradores` puede revisar posteriormente los registros y retirar los que sean falsos, incorrectos o incumplan las condiciones.
+Después ejecuta una sola vez `supabase/formulario_seguro.sql`. Desde ese momento el propietario debe confirmar su correo mediante un enlace antes de publicar y podrá enviar como máximo tres altas cada 24 horas. Supabase Auth debe permitir el proveedor **Email**.
 
-El acceso administrativo admite contraseña o un enlace seguro enviado por correo. Para usar el enlace, configura en Supabase **Authentication > URL Configuration** el sitio `https://tallermap.es` y permite la redirección `https://tallermap.es/**`.
+Todas las altas de España se publican automáticamente como fichas activas no verificadas después de confirmar el correo. Una cuenta incluida en `public.administradores` puede revisar posteriormente los registros y retirar los que sean falsos, incorrectos o incumplan las condiciones.
+
+El acceso administrativo y la verificación de propietarios utilizan enlaces seguros enviados por correo. Configura en Supabase **Authentication > URL Configuration** el sitio `https://tallermap.es` y permite la redirección `https://tallermap.es/**`.
 
 ## Despliegue
 

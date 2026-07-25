@@ -34,9 +34,9 @@
                 <div class="registro-introduccion">
                     <span class="etiqueta">Alta gratuita</span>
                     <h1>Publica tu taller en <span>TallerMap</span></h1>
-                    <p>Completa el formulario con los datos reales del negocio. Todas las altas se publican directamente como fichas no verificadas.</p>
+                    <p>Confirma tu correo y completa el formulario con los datos reales del negocio. Todas las altas válidas se publican directamente como fichas no verificadas.</p>
                     <ul class="registro-lista">
-                        <li>Las altas de toda España se publican automáticamente.</li>
+                        <li>Las altas de toda España se publican automáticamente después de verificar el correo.</li>
                         <li>Las fichas aparecen inicialmente como no verificadas.</li>
                         <li>La ficha permanece publicada sin obligación de pago.</li>
                     </ul>
@@ -66,9 +66,14 @@
                             <input id="cif" name="cif" type="text" minlength="7" maxlength="20" autocomplete="off" required>
                         </div>
 
-                        <div class="campo-formulario">
+                        <div class="campo-formulario campo-email-verificacion">
                             <label for="email">Correo electrónico *</label>
                             <input id="email" name="email" type="email" maxlength="255" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" required>
+                            <div class="verificacion-email-acciones">
+                                <button id="boton-verificar-email" class="boton boton-secundario boton-verificar-email" type="button">Verificar correo</button>
+                                <button id="boton-cambiar-email" class="boton-enlace boton-cambiar-email" type="button" hidden>Cambiar correo</button>
+                            </div>
+                            <small id="estado-verificacion-email" class="campo-estado" aria-live="polite">Antes de publicar te enviaremos un enlace para confirmar que este correo es tuyo.</small>
                         </div>
 
                         <div class="campo-formulario">
@@ -94,7 +99,9 @@
 
                         <div class="campo-formulario">
                             <label for="ciudad">Ciudad *</label>
-                            <input id="ciudad" name="ciudad" type="text" minlength="2" maxlength="100" autocomplete="address-level2" required>
+                            <input id="ciudad" name="ciudad" type="text" minlength="2" maxlength="100" autocomplete="address-level2" list="localidades-codigo-postal" aria-describedby="estado-localidad" required>
+                            <datalist id="localidades-codigo-postal"></datalist>
+                            <small id="estado-localidad" class="campo-estado" aria-live="polite">Escribe primero el código postal para comprobar las poblaciones correspondientes.</small>
                         </div>
 
                         <div class="campo-formulario campo-ancho">
@@ -108,6 +115,10 @@
                         <fieldset class="campo-formulario campo-ancho horarios-formulario" id="horarios-semanales">
                             <legend>Horario semanal *</legend>
                             <p class="campo-ayuda">Selecciona el horario de cada día. Si el taller no abre, elige «Cerrado». El segundo turno es opcional.</p>
+                            <div class="horarios-acciones">
+                                <button id="copiar-horario-laborables" class="boton-enlace" type="button">Copiar el lunes de martes a viernes</button>
+                                <button id="cerrar-fin-semana" class="boton-enlace" type="button">Marcar sábado y domingo como cerrados</button>
+                            </div>
                             <div class="horarios-cabecera" aria-hidden="true">
                                 <span>Día</span><span>Apertura</span><span>Cierre</span><span>2.ª apertura</span><span>2.º cierre</span>
                             </div>
@@ -115,7 +126,8 @@
                         </fieldset>
 
                         <fieldset class="campo-formulario campo-ancho servicios-formulario">
-                            <legend>Servicios principales</legend>
+                            <legend>Servicios principales *</legend>
+                            <p class="campo-ayuda">Selecciona al menos un servicio. Puedes marcar todos los que realmente ofrece el taller.</p>
                             <div class="servicios-opciones" id="lista-servicios-registro">
                                 <label><input type="checkbox" name="servicios" value="mecanica-general"> Mecánica general</label>
                                 <label><input type="checkbox" name="servicios" value="chapa-pintura"> Chapa y pintura</label>
@@ -145,11 +157,24 @@
                     </div>
 
                     <div class="aceptacion-condiciones">
+                        <div class="resumen-privacidad">
+                            <strong>Información básica de privacidad</strong>
+                            <p><b>Responsable:</b> CRODIS Media – TallerMap. <b>Finalidad:</b> comprobar, publicar y gestionar la ficha del taller. Algunos datos empresariales y de contacto se mostrarán públicamente. Puedes ejercer tus derechos escribiendo a <a href="mailto:crodismedia@outlook.es">crodismedia@outlook.es</a>. Consulta la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad completa</a>.</p>
+                        </div>
+                        <label for="acepta_privacidad">
+                            <input id="acepta_privacidad" name="acepta_privacidad" type="checkbox" required>
+                            <span>He leído y acepto el tratamiento de los datos conforme a la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</span>
+                        </label>
                         <label for="acepta_responsabilidad">
                             <input id="acepta_responsabilidad" name="acepta_responsabilidad" type="checkbox" required>
                             <span>Confirmo que los datos son veraces y acepto las <a href="condiciones-publicacion.html" target="_blank" rel="noopener">condiciones de publicación</a>.</span>
                         </label>
                         <p>La ficha se publicará automáticamente como no verificada y podrá revisarse o retirarse si incumple las condiciones.</p>
+                    </div>
+
+                    <div class="campo-trampa" aria-hidden="true">
+                        <label for="empresa_url">Deja este campo vacío</label>
+                        <input id="empresa_url" name="empresa_url" type="text" tabindex="-1" autocomplete="off">
                     </div>
 
                     <button id="boton-enviar" class="boton boton-enviar" type="submit">Enviar alta gratuita</button>

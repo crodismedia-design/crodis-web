@@ -257,7 +257,7 @@
     function construirConsulta({ conRango = true, soloConteo = false } = {}) {
         const columnas = soloConteo
             ? "id"
-            : "id,solicitud_id,nombre,propietario,cif,email,telefono,web,direccion,codigo_postal,ciudad,provincia,horarios,servicios,fotos,descripcion,verificado,activo,created_at,updated_at";
+            : "id,solicitud_id,nombre,telefono,web,direccion,codigo_postal,ciudad,provincia,horarios,servicios,fotos,descripcion,verificado,activo,created_at,updated_at";
         let consulta = window.supabaseClient
             .from("talleres")
             .select(columnas, { count: "exact", head: soloConteo });
@@ -274,8 +274,6 @@
                 `nombre.ilike.%${busqueda}%`,
                 `ciudad.ilike.%${busqueda}%`,
                 `provincia.ilike.%${busqueda}%`,
-                `cif.ilike.%${busqueda}%`,
-                `email.ilike.%${busqueda}%`,
                 `telefono.ilike.%${busqueda}%`
             ].join(","));
         }
@@ -333,9 +331,7 @@
             </div>
             ${foto ? `<img class="admin-taller-miniatura" src="${escaparHtml(foto)}" alt="Fotografía de ${escaparHtml(taller.nombre)}" loading="lazy">` : ""}
             <dl>
-                <div><dt>Responsable</dt><dd>${escaparHtml(taller.propietario || "")}</dd></div>
-                <div><dt>CIF/NIF</dt><dd>${escaparHtml(taller.cif || "")}</dd></div>
-                <div><dt>Contacto</dt><dd>${escaparHtml(taller.email || "")}<br>${escaparHtml(taller.telefono || "")}</dd></div>
+                <div><dt>Teléfono</dt><dd>${escaparHtml(taller.telefono || "No indicado")}</dd></div>
                 <div><dt>Dirección</dt><dd>${escaparHtml(taller.direccion || "")}<br>${escaparHtml(taller.codigo_postal || "")} ${escaparHtml(taller.ciudad || "")}</dd></div>
                 <div><dt>Servicios</dt><dd>${escaparHtml(servicios.join(", ") || "No indicados")}</dd></div>
                 <div><dt>Alta</dt><dd>${escaparHtml(formatoFecha(taller.created_at))}</dd></div>
@@ -477,7 +473,6 @@
         document.getElementById("admin-nombre").value =
             candidato.nombre === "Taller sin nombre" ? "" : candidato.nombre;
         document.getElementById("admin-telefono").value = candidato.telefono || "";
-        document.getElementById("admin-email").value = candidato.email || "";
         document.getElementById("admin-web").value = candidato.web || "";
         document.getElementById("admin-direccion").value = candidato.direccion || "";
         document.getElementById("admin-codigo-postal").value = candidato.codigo_postal || "";
@@ -494,7 +489,7 @@
             );
         }
         mostrar(
-            "Candidato cargado como inactivo. Completa responsable, CIF, contacto, dirección, horarios y servicios; comprueba la fuente antes de publicarlo.",
+            "Candidato cargado como inactivo. Completa teléfono, dirección, horarios y servicios; comprueba la fuente antes de publicarlo.",
             "aviso"
         );
         editor.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -564,9 +559,6 @@
         if (taller) {
             document.getElementById("titulo-editor").textContent = `Editar: ${taller.nombre}`;
             document.getElementById("admin-nombre").value = taller.nombre || "";
-            document.getElementById("admin-propietario").value = taller.propietario || "";
-            document.getElementById("admin-cif").value = taller.cif || "";
-            document.getElementById("admin-email").value = taller.email || "";
             document.getElementById("admin-telefono").value = taller.telefono || "";
             document.getElementById("admin-web").value = taller.web || "";
             document.getElementById("admin-direccion").value = taller.direccion || "";
@@ -627,9 +619,9 @@
         return {
             p_taller_id: tallerEditado?.id || null,
             p_nombre: valor("admin-nombre"),
-            p_propietario: valor("admin-propietario"),
-            p_cif: valor("admin-cif").toUpperCase(),
-            p_email: valor("admin-email").toLowerCase(),
+            p_propietario: null,
+            p_cif: null,
+            p_email: null,
             p_telefono: valor("admin-telefono"),
             p_web: normalizarWeb(valor("admin-web")) || null,
             p_direccion: valor("admin-direccion"),
@@ -648,8 +640,7 @@
     function mensajeError(error) {
         const detalle = String(error?.message || "").toLowerCase();
         if (detalle.includes("no autorizado")) return "Tu sesión no tiene permisos de administración.";
-        if (detalle.includes("duplicado")) return "Ya existe un taller con el mismo CIF o con el mismo nombre y dirección.";
-        if (detalle.includes("documento_fiscal")) return "El CIF, NIF o NIE no es válido.";
+        if (detalle.includes("duplicado")) return "Ya existe un taller con el mismo nombre y dirección.";
         if (detalle.includes("provincia_codigo")) return "La provincia no coincide con el código postal.";
         if (detalle.includes("horarios")) return "Revisa los horarios semanales.";
         if (detalle.includes("servicios")) return "Selecciona al menos un servicio.";
@@ -807,13 +798,11 @@
             return;
         }
         const cabecera = [
-            "Nombre", "Propietario", "CIF/NIF", "Email", "Teléfono", "Web",
-            "Dirección", "Código postal", "Población", "Provincia",
+            "Nombre", "Teléfono", "Web", "Dirección", "Código postal", "Población", "Provincia",
             "Servicios", "Activo", "Verificado", "Creado", "Actualizado"
         ];
         const filas = (data || []).map((taller) => [
-            taller.nombre, taller.propietario, taller.cif, taller.email,
-            taller.telefono, taller.web, taller.direccion, taller.codigo_postal,
+            taller.nombre, taller.telefono, taller.web, taller.direccion, taller.codigo_postal,
             taller.ciudad, taller.provincia, (taller.servicios || []).join(" | "),
             taller.activo ? "Sí" : "No", taller.verificado ? "Sí" : "No",
             taller.created_at, taller.updated_at

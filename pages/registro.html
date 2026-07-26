@@ -24,10 +24,7 @@
                     <small>Talleres cerca de ti</small>
                 </span>
             </a>
-            <div class="verificacion-email-acciones">
-                <a href="mi-taller.html" class="boton-enlace">Gestionar mi taller</a>
-                <a href="../index.html" class="boton-enlace">Volver al inicio</a>
-            </div>
+            <a href="../index.html" class="boton-enlace">Volver al inicio</a>
         </div>
     </header>
 
@@ -37,11 +34,11 @@
                 <div class="registro-introduccion">
                     <span class="etiqueta">Alta gratuita</span>
                     <h1>Publica tu taller en <span>TallerMap</span></h1>
-                    <p>Confirma tu correo y completa el formulario con los datos reales del negocio. Todas las altas válidas se publican directamente como fichas no verificadas.</p>
+                    <p>Completa el formulario con los datos públicos del negocio. Todas las altas válidas se publican directamente como fichas no verificadas.</p>
                     <ul class="registro-lista">
-                        <li>Las altas de toda España se publican automáticamente después de verificar el correo.</li>
+                        <li>Las altas de toda España se publican automáticamente.</li>
                         <li>Las fichas aparecen inicialmente como no verificadas.</li>
-                        <li>La ficha permanece publicada sin obligación de pago.</li>
+                        <li>La ficha permanece publicada sin obligación de pago y TallerMap gestiona sus cambios.</li>
                     </ul>
                 </div>
 
@@ -57,26 +54,6 @@
                         <div class="campo-formulario campo-ancho">
                             <label for="nombre_taller">Nombre del taller *</label>
                             <input id="nombre_taller" name="nombre_taller" type="text" minlength="2" maxlength="120" autocomplete="organization" required>
-                        </div>
-
-                        <div class="campo-formulario">
-                            <label for="propietario">Propietario o responsable *</label>
-                            <input id="propietario" name="propietario" type="text" minlength="2" maxlength="120" autocomplete="name" required>
-                        </div>
-
-                        <div class="campo-formulario">
-                            <label for="cif">CIF o NIF *</label>
-                            <input id="cif" name="cif" type="text" minlength="7" maxlength="20" autocomplete="off" required>
-                        </div>
-
-                        <div class="campo-formulario campo-email-verificacion">
-                            <label for="email">Correo electrónico *</label>
-                            <input id="email" name="email" type="email" maxlength="255" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" required>
-                            <div class="verificacion-email-acciones">
-                                <button id="boton-verificar-email" class="boton boton-secundario boton-verificar-email" type="button">Verificar correo</button>
-                                <button id="boton-cambiar-email" class="boton-enlace boton-cambiar-email" type="button" hidden>Cambiar correo</button>
-                            </div>
-                            <small id="estado-verificacion-email" class="campo-estado" aria-live="polite">Antes de publicar te enviaremos un enlace para confirmar que este correo es tuyo.</small>
                         </div>
 
                         <div class="campo-formulario">

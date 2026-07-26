@@ -8,18 +8,12 @@
     const vistaPreviaFotos = document.getElementById("vista-previa-fotos");
     const campoCondicionesFotos = document.getElementById("acepta_condiciones_fotos");
     const listaHorarios = document.getElementById("lista-horarios");
-    const campoEmail = document.getElementById("email");
-    const botonVerificarEmail = document.getElementById("boton-verificar-email");
-    const botonCambiarEmail = document.getElementById("boton-cambiar-email");
-    const estadoVerificacionEmail = document.getElementById("estado-verificacion-email");
     const campoCodigoPostal = document.getElementById("codigo_postal");
     const campoCiudad = document.getElementById("ciudad");
     const campoProvincia = document.getElementById("provincia");
     const estadoLocalidad = document.getElementById("estado-localidad");
     const listaLocalidades = document.getElementById("localidades-codigo-postal");
     const campoWeb = document.getElementById("web");
-    const CLAVE_BORRADOR = "tallermap-borrador-alta";
-    const DURACION_BORRADOR = 30 * 60 * 1000;
     const DIAS_SEMANA = [
         ["lunes", "Lunes"], ["martes", "Martes"], ["miercoles", "Miércoles"],
         ["jueves", "Jueves"], ["viernes", "Viernes"], ["sabado", "Sábado"],
@@ -29,7 +23,6 @@
     const MAXIMO_FOTOS = 5;
     const MAXIMO_BYTES_FOTO = 5 * 1024 * 1024;
     let urlsVistaPrevia = [];
-    let sesionVerificada = null;
     let temporizadorCodigoPostal = null;
     const localidadesPorCodigo = new Map();
 
@@ -67,35 +60,6 @@
         } catch (_error) {
             return false;
         }
-    }
-
-    function documentoFiscalValido(documento) {
-        const limpio = String(documento || "").toUpperCase().replace(/[\s.-]/g, "");
-        const letrasNif = "TRWAGMYFPDXBNJZSQVHLCKE";
-        const nif = limpio.match(/^(\d{8})([A-Z])$/);
-        if (nif) {
-            return letrasNif[Number(nif[1]) % 23] === nif[2];
-        }
-
-        const nie = limpio.match(/^([XYZ])(\d{7})([A-Z])$/);
-        if (nie) {
-            const prefijo = { X: "0", Y: "1", Z: "2" }[nie[1]];
-            return letrasNif[Number(`${prefijo}${nie[2]}`) % 23] === nie[3];
-        }
-
-        const cif = limpio.match(/^([ABCDEFGHJNPQRSUVW])(\d{7})([0-9A-J])$/);
-        if (!cif) return false;
-        const numeros = cif[2].split("").map(Number);
-        const sumaPares = numeros[1] + numeros[3] + numeros[5];
-        const sumaImpares = [numeros[0], numeros[2], numeros[4], numeros[6]]
-            .map((numero) => numero * 2)
-            .reduce((total, numero) => total + Math.floor(numero / 10) + numero % 10, 0);
-        const controlNumero = (10 - (sumaPares + sumaImpares) % 10) % 10;
-        const controlLetra = "JABCDEFGHI"[controlNumero];
-        const control = cif[3];
-        if ("ABEH".includes(cif[1])) return control === String(controlNumero);
-        if ("KPQS".includes(cif[1])) return control === controlLetra;
-        return control === String(controlNumero) || control === controlLetra;
     }
 
     function serviciosSeleccionados() {
@@ -264,159 +228,6 @@
         if (!elemento) return;
         elemento.textContent = texto;
         elemento.className = `campo-estado${tipo ? ` campo-estado-${tipo}` : ""}`;
-    }
-
-    function guardarBorrador() {
-        try {
-            const ids = [
-                "nombre_taller", "propietario", "cif", "email", "telefono",
-                "web", "direccion", "codigo_postal", "ciudad", "provincia",
-                "descripcion", "acepta_privacidad", "acepta_responsabilidad"
-            ];
-            const campos = Object.fromEntries(ids.map((id) => {
-                const elemento = document.getElementById(id);
-                return [id, elemento?.type === "checkbox" ? Boolean(elemento.checked) : elemento?.value || ""];
-            }));
-            const horarios = Array.from(
-                listaHorarios?.querySelectorAll("select") || [],
-                (select) => select.value
-            );
-            localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({
-                guardadoAt: Date.now(),
-                campos,
-                servicios: serviciosSeleccionados(),
-                horarios
-            }));
-        } catch (error) {
-            console.warn("No se pudo conservar temporalmente el formulario:", error);
-        }
-    }
-
-    function restaurarBorrador() {
-        try {
-            const texto = localStorage.getItem(CLAVE_BORRADOR);
-            if (!texto) return;
-            localStorage.removeItem(CLAVE_BORRADOR);
-            const borrador = JSON.parse(texto);
-            if (!borrador?.guardadoAt || Date.now() - borrador.guardadoAt > DURACION_BORRADOR) return;
-
-            Object.entries(borrador.campos || {}).forEach(([id, valorCampo]) => {
-                const elemento = document.getElementById(id);
-                if (!elemento || id === "email" && sesionVerificada?.user?.email) return;
-                if (elemento.type === "checkbox") elemento.checked = Boolean(valorCampo);
-                else elemento.value = String(valorCampo || "");
-            });
-            const servicios = new Set(borrador.servicios || []);
-            formulario.querySelectorAll('input[name="servicios"]').forEach((campo) => {
-                campo.checked = servicios.has(campo.value);
-            });
-            const selectsHorario = listaHorarios?.querySelectorAll("select") || [];
-            selectsHorario.forEach((select, indice) => {
-                select.value = borrador.horarios?.[indice] || "";
-            });
-            listaHorarios?.querySelectorAll("[data-dia]").forEach(actualizarFilaHorario);
-            if (campoFotos) campoFotos.value = "";
-            if (campoCondicionesFotos) {
-                campoCondicionesFotos.checked = false;
-                campoCondicionesFotos.disabled = true;
-                campoCondicionesFotos.required = false;
-            }
-        } catch (error) {
-            localStorage.removeItem(CLAVE_BORRADOR);
-            console.warn("No se pudo restaurar el formulario temporal:", error);
-        }
-    }
-
-    function aplicarSesionVerificada(session) {
-        sesionVerificada = session || null;
-        const emailSesion = String(session?.user?.email || "").trim().toLowerCase();
-        const contenedor = campoEmail?.closest(".campo-email-verificacion");
-
-        if (emailSesion) {
-            campoEmail.value = emailSesion;
-            campoEmail.readOnly = true;
-            contenedor?.classList.add("campo-email-verificado");
-            if (botonVerificarEmail) botonVerificarEmail.hidden = true;
-            if (botonCambiarEmail) botonCambiarEmail.hidden = false;
-            mostrarEstadoCampo(
-                estadoVerificacionEmail,
-                `✓ Correo verificado: ${emailSesion}`,
-                "exito"
-            );
-            return;
-        }
-
-        campoEmail.readOnly = false;
-        contenedor?.classList.remove("campo-email-verificado");
-        if (botonVerificarEmail) botonVerificarEmail.hidden = false;
-        if (botonCambiarEmail) botonCambiarEmail.hidden = true;
-        mostrarEstadoCampo(
-            estadoVerificacionEmail,
-            "Antes de publicar te enviaremos un enlace para confirmar que este correo es tuyo."
-        );
-    }
-
-    async function comprobarSesionRegistro() {
-        if (!window.supabaseClient?.auth) return;
-        const { data, error } = await window.supabaseClient.auth.getSession();
-        if (error) {
-            console.error("No se pudo comprobar la sesión de registro:", error);
-            return;
-        }
-        aplicarSesionVerificada(data.session);
-        if (data.session) restaurarBorrador();
-    }
-
-    async function enviarVerificacionEmail() {
-        const email = campoEmail?.value.trim().toLowerCase() || "";
-        if (!email || !campoEmail.checkValidity()) {
-            mostrarMensaje("Escribe primero un correo electrónico válido.", "error");
-            campoEmail?.focus();
-            return;
-        }
-        if (!window.supabaseClient?.auth) {
-            mostrarMensaje("No se ha podido conectar con el servicio de verificación.", "error");
-            return;
-        }
-
-        guardarBorrador();
-        botonVerificarEmail.disabled = true;
-        botonVerificarEmail.textContent = "Enviando enlace...";
-        mostrarEstadoCampo(estadoVerificacionEmail, "Preparando el correo de verificación…", "cargando");
-
-        const destino = new URL("registro.html?correo=verificado", window.location.href).href;
-        const { error } = await window.supabaseClient.auth.signInWithOtp({
-            email,
-            options: {
-                emailRedirectTo: destino,
-                shouldCreateUser: true
-            }
-        });
-
-        botonVerificarEmail.disabled = false;
-        botonVerificarEmail.textContent = "Verificar correo";
-        if (error) {
-            console.error("No se pudo enviar la verificación:", error);
-            mostrarEstadoCampo(
-                estadoVerificacionEmail,
-                "No se pudo enviar el enlace. Espera un minuto y vuelve a intentarlo.",
-                "error"
-            );
-            return;
-        }
-        mostrarEstadoCampo(
-            estadoVerificacionEmail,
-            "Enlace enviado. Abre tu correo, pulsa el enlace y volverás al formulario. Las fotografías deberán seleccionarse de nuevo.",
-            "exito"
-        );
-    }
-
-    async function cambiarEmailVerificado() {
-        if (!window.supabaseClient?.auth) return;
-        await window.supabaseClient.auth.signOut();
-        aplicarSesionVerificada(null);
-        campoEmail.value = "";
-        campoEmail.focus();
     }
 
     async function consultarLocalidades(codigoPostal) {
@@ -633,21 +444,6 @@
             enfocar("nombre_taller");
             return false;
         }
-        if (datos.propietario.length < 2) {
-            mostrarMensaje("Escribe el nombre del propietario o responsable.", "error");
-            enfocar("propietario");
-            return false;
-        }
-        if (!documentoFiscalValido(datos.cif)) {
-            mostrarMensaje("El CIF, NIF o NIE no tiene un formato o dígito de control válido.", "error");
-            enfocar("cif");
-            return false;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(datos.email)) {
-            mostrarMensaje("Escribe un correo válido, por ejemplo nombre@correo.com.", "error");
-            enfocar("email");
-            return false;
-        }
         if (datos.telefono.replace(/\D/g, "").length < 9) {
             mostrarMensaje("Escribe un teléfono válido de al menos 9 cifras.", "error");
             enfocar("telefono");
@@ -715,7 +511,7 @@
         const detalle = String(error?.message || "").toLowerCase();
 
         if (error?.code === "42501" || detalle.includes("permission denied")) {
-            return "No se permite publicar sin un correo verificado o falta aplicar formulario_seguro.sql en Supabase.";
+            return "Supabase todavía no tiene aplicada la configuración del formulario sin correo.";
         }
         if (detalle.includes("row-level security")) {
             return "La solicitud ha sido bloqueada por la política de seguridad de Supabase.";
@@ -725,9 +521,6 @@
         }
         if (detalle.includes("limite_altas") || detalle.includes("demasiadas altas")) {
             return "Has alcanzado el límite de tres altas en 24 horas. Si gestionas más talleres, contacta con TallerMap.";
-        }
-        if (detalle.includes("correo_no_verificado")) {
-            return "Debes verificar el correo antes de publicar.";
         }
         if (detalle.includes("localidad_no_verificada")) {
             return "La población no coincide con el código postal indicado.";
@@ -745,7 +538,7 @@
             return "Falta activar la configuración de horarios obligatorios en Supabase.";
         }
         if (error?.code === "23514" || detalle.includes("check constraint")) {
-            return "Uno de los datos no cumple los requisitos. Revisa el CIF, teléfono y código postal.";
+            return "Uno de los datos no cumple los requisitos. Revisa el teléfono, la dirección y el código postal.";
         }
         return "No se pudo enviar la solicitud. Inténtalo de nuevo dentro de unos minutos.";
     }
@@ -771,9 +564,7 @@
         for (let intento = 0; intento < 5; intento += 1) {
             resultado = await window.supabaseClient
                 .from("solicitudes_alta_taller")
-                .insert([datosCompatibles])
-                .select("id")
-                .single();
+                .insert([datosCompatibles]);
 
             if (!resultado.error) return resultado;
 
@@ -821,12 +612,6 @@
         campoWeb.value = normalizarWeb(campoWeb.value);
     });
 
-    document.getElementById("cif")?.addEventListener("blur", (evento) => {
-        evento.target.value = evento.target.value.toUpperCase().replace(/\s+/g, "");
-    });
-
-    botonVerificarEmail?.addEventListener("click", enviarVerificacionEmail);
-    botonCambiarEmail?.addEventListener("click", cambiarEmailVerificado);
     document.getElementById("copiar-horario-laborables")?.addEventListener("click", copiarLunesALaborables);
     document.getElementById("cerrar-fin-semana")?.addEventListener("click", cerrarFinDeSemana);
 
@@ -862,14 +647,6 @@
 
         if (campoWeb) campoWeb.value = normalizarWeb(campoWeb.value);
 
-        const emailSesion = String(sesionVerificada?.user?.email || "").trim().toLowerCase();
-        const emailFormulario = valor("email").toLowerCase();
-        if (!emailSesion || emailSesion !== emailFormulario) {
-            mostrarMensaje("Verifica este correo antes de completar y publicar el taller.", "error");
-            campoEmail?.focus();
-            return;
-        }
-
         if (!formulario.checkValidity()) {
             formulario.reportValidity();
             return;
@@ -880,9 +657,6 @@
         const subidas = prepararSubidas(archivos);
         const datos = {
             nombre_taller: valor("nombre_taller"),
-            propietario: valor("propietario"),
-            cif: valor("cif").toUpperCase(),
-            email: valor("email").toLowerCase(),
             telefono: valor("telefono"),
             web: normalizarWeb(valor("web")),
             direccion: valor("direccion"),
@@ -916,7 +690,7 @@
 
         cambiarEstadoBoton(true);
         try {
-            const { data: solicitud, error } = await insertarSolicitud(datos);
+            const { error } = await insertarSolicitud(datos);
             if (error) {
                 console.error("Error al registrar la solicitud:", error);
                 mostrarMensaje(mensajeErrorSupabase(error), "error");
@@ -928,18 +702,6 @@
                 cambiarEstadoBoton(true, "Subiendo fotos...");
                 const resultadoFotos = await subirFotos(subidas);
                 fotosFallidas = resultadoFotos.fallidas;
-                if (fotosFallidas.length && solicitud?.id) {
-                    const { error: errorSincronizacion } = await window.supabaseClient.rpc(
-                        "actualizar_fotos_solicitud",
-                        {
-                            p_solicitud_id: solicitud.id,
-                            p_fotos: resultadoFotos.correctas
-                        }
-                    );
-                    if (errorSincronizacion) {
-                        console.error("No se pudieron retirar las rutas de fotos fallidas:", errorSincronizacion);
-                    }
-                }
             }
 
             formulario.reset();
@@ -949,8 +711,6 @@
                 campoCondicionesFotos.required = false;
             }
             limpiarVistaPrevia();
-            localStorage.removeItem(CLAVE_BORRADOR);
-            if (campoEmail && emailSesion) campoEmail.value = emailSesion;
             if (fotosFallidas.length) {
                 mostrarMensaje(
                     "El alta se ha guardado, pero algunas fotografías no pudieron subirse. La ficha continuará sin esas imágenes.",
@@ -970,12 +730,4 @@
         }
     });
 
-    window.supabaseClient?.auth?.onAuthStateChange((_evento, session) => {
-        aplicarSesionVerificada(session);
-    });
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", comprobarSesionRegistro);
-    } else {
-        comprobarSesionRegistro();
-    }
 }());

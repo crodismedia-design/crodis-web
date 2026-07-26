@@ -33,12 +33,12 @@
         return /^https?:\/\//i.test(texto) ? texto : `https://${texto}`;
     }
 
-    {
-    formulario.querySelectorAll("[required]").forEach((campo) => {
-        if (campo.id !== "admin-nombre") {
-            campo.removeAttribute("required");
-        }
-    });
+    function hacerCamposOpcionales() {
+        formulario.querySelectorAll("[required]").forEach((campo) => {
+            if (campo.id !== "admin-nombre") {
+                campo.removeAttribute("required");
+            }
+        });
     }
 
     function marcarEtiquetaOpcional(id) {
@@ -58,9 +58,8 @@
     function prepararAspectoFormulario() {
         hacerCamposOpcionales();
         [
-            "admin-propietario", "admin-cif", "admin-email", "admin-telefono",
-            "admin-direccion", "admin-codigo-postal", "admin-ciudad",
-            "admin-provincia", "admin-descripcion"
+            "admin-telefono", "admin-direccion", "admin-codigo-postal",
+            "admin-ciudad", "admin-provincia", "admin-descripcion"
         ].forEach(marcarEtiquetaOpcional);
 
         formulario.querySelectorAll("fieldset legend").forEach((leyenda) => {
@@ -168,9 +167,9 @@
         return {
             p_taller_id: tallerIdActual,
             p_nombre: valor("admin-nombre"),
-            p_propietario: valor("admin-propietario") || null,
-            p_cif: valor("admin-cif").toUpperCase() || null,
-            p_email: valor("admin-email").toLowerCase() || null,
+            p_propietario: null,
+            p_cif: null,
+            p_email: null,
             p_telefono: valor("admin-telefono") || null,
             p_web: normalizarWeb(valor("admin-web")),
             p_direccion: valor("admin-direccion") || null,
@@ -193,8 +192,6 @@
         }
         if (detalle.includes("no autorizado")) return "Tu sesión no tiene permisos de administración.";
         if (detalle.includes("nombre_no_valido")) return "El nombre debe contener entre 2 y 120 caracteres.";
-        if (detalle.includes("documento_fiscal")) return "El CIF, NIF o NIE indicado no es válido. Puedes dejarlo vacío.";
-        if (detalle.includes("email_no_valido")) return "El correo indicado no es válido. Puedes dejarlo vacío.";
         if (detalle.includes("telefono_no_valido")) return "El teléfono debe tener entre 9 y 30 caracteres o quedar vacío.";
         if (detalle.includes("web_no_valida")) return "La dirección web no es válida. Puedes dejarla vacía.";
         if (detalle.includes("direccion_no_valida")) return "La dirección debe tener entre 5 y 255 caracteres o quedar vacía.";
@@ -216,12 +213,6 @@
         if (nombre.length < 2 || nombre.length > 120) {
             mostrar("El nombre del taller es el único campo obligatorio y debe tener entre 2 y 120 caracteres.");
             document.getElementById("admin-nombre")?.focus();
-            return;
-        }
-
-        const email = valor("admin-email");
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            mostrar("El correo no es válido. Corrígelo o deja el campo vacío.");
             return;
         }
 

@@ -1,0 +1,56 @@
+CORRECCIÓN TALLERMAP — 26/07/2026
+
+OBJETIVO
+- Quitar «Propietario o responsable», «CIF o NIF» y «Correo electrónico»
+  del formulario público y del formulario de Administración.
+- Dejar la gestión de las fichas exclusivamente al administrador.
+- Reparar el panel de Administración que se quedaba girando.
+
+PASO 1 — SUPABASE (HACER PRIMERO)
+1. Abre Supabase y entra en tu proyecto TallerMap.
+2. Entra en SQL Editor.
+3. Pulsa New query.
+4. Abre el archivo:
+   supabase/2026-07-26_formularios_sin_datos_propietario.sql
+5. Copia TODO su contenido y pégalo en la consulta.
+6. Pulsa Run.
+7. Debe aparecer el mensaje Success.
+
+IMPORTANTE:
+- Ejecuta este SQL como el último archivo de configuración.
+- No vuelvas a ejecutar después el antiguo formulario_seguro.sql, porque
+  volvería a exigir correo verificado.
+
+PASO 2 — GITHUB
+1. Abre:
+   https://github.com/crodismedia/crodis-web
+2. Comprueba que estás en la rama main.
+3. Pulsa Add file > Upload files.
+4. Desde la carpeta extraída, arrastra:
+   - index.html
+   - la carpeta js
+   - la carpeta pages
+   - la carpeta supabase
+5. En Commit message escribe:
+   Quitar datos de propietario y reparar Administración
+6. Elige Commit directly to the main branch.
+7. Pulsa el botón verde Commit changes.
+
+PASO 3 — COMPROBACIÓN
+1. Espera uno o dos minutos para que Vercel publique el cambio.
+2. Abre:
+   https://www.tallermap.es/pages/admin-login.html
+3. Entra en Administración y comprueba que ya no se queda girando.
+4. Abre:
+   https://www.tallermap.es/pages/registro.html
+5. Comprueba que los tres campos ya no aparecen.
+6. Haz una prueba de alta sin fotografías y confirma que se publica.
+
+ARCHIVOS MODIFICADOS
+- index.html
+- pages/registro.html
+- pages/admin.html
+- js/registro.js
+- js/admin.js
+- js/admin-campos-opcionales.js
+- supabase/2026-07-26_formularios_sin_datos_propietario.sql

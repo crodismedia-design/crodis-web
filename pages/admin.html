@@ -89,6 +89,39 @@
                 </div>
             </section>
 
+            <section class="admin-buscador-internet" aria-labelledby="titulo-buscador-internet">
+                <div class="admin-seccion-cabecera">
+                    <div>
+                        <span class="etiqueta">Captación y ampliación</span>
+                        <h2 id="titulo-buscador-internet">Buscar talleres externos</h2>
+                        <p>Localiza candidatos por población o código postal y pásalos al editor antes de publicarlos.</p>
+                    </div>
+                </div>
+                <form id="formulario-buscador-internet" class="admin-filtros-internet">
+                    <label>
+                        <span>Ubicación</span>
+                        <input id="busqueda-internet-ubicacion" type="search" minlength="2" maxlength="120" placeholder="Ej.: Silla, Valencia o 46460" required>
+                    </label>
+                    <label>
+                        <span>Radio</span>
+                        <select id="busqueda-internet-radio">
+                            <option value="5">5 km</option>
+                            <option value="10" selected>10 km</option>
+                            <option value="15">15 km</option>
+                            <option value="25">25 km</option>
+                        </select>
+                    </label>
+                    <button id="boton-buscar-internet" class="boton" type="submit">Buscar candidatos</button>
+                </form>
+                <p id="estado-buscador-internet" class="admin-resumen-ubicaciones" aria-live="polite">
+                    La búsqueda es manual y no publica ningún taller automáticamente.
+                </p>
+                <div id="resultados-buscador-internet" class="admin-candidatos"></div>
+                <p class="admin-atribucion">
+                    Fuente: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© colaboradores de OpenStreetMap, datos ODbL</a>.
+                </p>
+            </section>
+
             <div class="admin-herramientas">
                 <label class="admin-busqueda">
                     <span>Buscar</span>

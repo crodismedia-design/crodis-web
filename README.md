@@ -48,6 +48,8 @@ Para permitir que cada propietario vuelva a editar sus fichas, ejecuta una sola 
 
 Para activar el centro de control completo, ejecuta después una sola vez `supabase/admin_control_total.sql`. El administrador podrá crear fichas desde cero, editar todos sus campos, verificarlas, activarlas o desactivarlas, eliminarlas con confirmación, consultar el historial, buscar y filtrar, exportar CSV y ver los talleres exclusivamente agrupados por provincia y población.
 
+El panel incluye también un buscador administrativo de candidatos basado en OpenStreetMap. Para activarlo, despliega `supabase/functions/buscar-talleres-internet/index.ts` como Edge Function con el nombre `buscar-talleres-internet`. Los resultados externos nunca se publican automáticamente: se comprueban posibles duplicados y el administrador debe pasarlos al editor, completar los datos obligatorios y revisar su exactitud.
+
 Todas las altas de España se publican automáticamente como fichas activas no verificadas después de confirmar el correo. Una cuenta incluida en `public.administradores` puede revisar posteriormente los registros y retirar los que sean falsos, incorrectos o incumplan las condiciones.
 
 El acceso administrativo y la verificación de propietarios utilizan enlaces seguros enviados por correo. Configura en Supabase **Authentication > URL Configuration** el sitio `https://tallermap.es` y permite la redirección `https://tallermap.es/**`.

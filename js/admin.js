@@ -21,6 +21,7 @@
     let totalFiltrado = 0;
     let talleresPagina = [];
     let ubicacionesActuales = [];
+    let candidatosInternet = [];
     let tallerEditado = null;
 
     function mostrar(texto, tipo = "error") {
@@ -404,6 +405,99 @@
                 </tr>
             `).join("")
             : '<tr><td colspan="7">No hay talleres en esta ubicación.</td></tr>';
+    }
+
+    function tarjetaCandidato(candidato) {
+        const contacto = [candidato.telefono, candidato.email]
+            .filter(Boolean)
+            .join(" · ");
+        return `<article class="admin-candidato${candidato.posible_duplicado ? " admin-candidato-duplicado" : ""}" data-candidato-id="${escaparHtml(candidato.id)}">
+            <div>
+                <span class="admin-candidato-estado">${candidato.posible_duplicado ? "Posible duplicado" : "Candidato nuevo"}</span>
+                <h3>${escaparHtml(candidato.nombre)}</h3>
+                <p>${escaparHtml([
+                    candidato.direccion,
+                    candidato.codigo_postal,
+                    candidato.ciudad,
+                    candidato.provincia
+                ].filter(Boolean).join(", ") || "Ubicación aproximada")}</p>
+                ${contacto ? `<p>${escaparHtml(contacto)}</p>` : ""}
+                ${candidato.web ? `<p><a href="${escaparHtml(candidato.web)}" target="_blank" rel="noopener noreferrer">Visitar su web</a></p>` : ""}
+                ${candidato.horario_externo ? `<p><strong>Horario externo:</strong> ${escaparHtml(candidato.horario_externo)}</p>` : ""}
+            </div>
+            <div class="admin-candidato-acciones">
+                <a class="boton-enlace" href="${escaparHtml(candidato.fuente)}" target="_blank" rel="noopener noreferrer">Comprobar fuente</a>
+                <button class="boton boton-pequeno" data-accion-candidato="importar" type="button"${candidato.posible_duplicado ? " disabled" : ""}>
+                    ${candidato.posible_duplicado ? "Ya puede existir" : "Pasar al editor"}
+                </button>
+            </div>
+        </article>`;
+    }
+
+    async function buscarTalleresInternet(evento) {
+        evento.preventDefault();
+        const ubicacion = valor("busqueda-internet-ubicacion");
+        const radio = Number(valor("busqueda-internet-radio")) || 10;
+        const estado = document.getElementById("estado-buscador-internet");
+        const resultados = document.getElementById("resultados-buscador-internet");
+        const boton = document.getElementById("boton-buscar-internet");
+        if (ubicacion.length < 2) return;
+
+        boton.disabled = true;
+        boton.textContent = "Buscando…";
+        estado.textContent = "Consultando talleres de la zona…";
+        resultados.replaceChildren();
+        const { data, error } = await window.supabaseClient.functions.invoke(
+            "buscar-talleres-internet",
+            { body: { ubicacion, radio_km: radio } }
+        );
+        boton.disabled = false;
+        boton.textContent = "Buscar candidatos";
+
+        if (error || data?.error) {
+            console.error("Error en búsqueda externa:", error || data?.error);
+            candidatosInternet = [];
+            estado.textContent = data?.error
+                || "No se pudo completar la búsqueda. Comprueba que la función está desplegada.";
+            return;
+        }
+        candidatosInternet = Array.isArray(data?.candidatos) ? data.candidatos : [];
+        const nuevos = candidatosInternet.filter((candidato) => !candidato.posible_duplicado).length;
+        const duplicados = candidatosInternet.length - nuevos;
+        estado.textContent = `${candidatosInternet.length} resultados · ${nuevos} candidatos nuevos · ${duplicados} posibles duplicados`;
+        resultados.innerHTML = candidatosInternet.length
+            ? candidatosInternet.map(tarjetaCandidato).join("")
+            : "<p>No se encontraron talleres en esta zona.</p>";
+    }
+
+    function importarCandidato(candidato) {
+        abrirEditor();
+        document.getElementById("titulo-editor").textContent =
+            `Revisar candidato: ${candidato.nombre}`;
+        document.getElementById("admin-nombre").value =
+            candidato.nombre === "Taller sin nombre" ? "" : candidato.nombre;
+        document.getElementById("admin-telefono").value = candidato.telefono || "";
+        document.getElementById("admin-email").value = candidato.email || "";
+        document.getElementById("admin-web").value = candidato.web || "";
+        document.getElementById("admin-direccion").value = candidato.direccion || "";
+        document.getElementById("admin-codigo-postal").value = candidato.codigo_postal || "";
+        document.getElementById("admin-ciudad").value = candidato.ciudad || "";
+        document.getElementById("admin-descripcion").value =
+            "Ficha incorporada desde una fuente pública. Datos pendientes de comprobación administrativa.";
+        document.getElementById("admin-activo").checked = false;
+        document.getElementById("admin-verificado").checked = false;
+        cargarServicios(["mecanica-general"]);
+        if (candidato.codigo_postal) {
+            window.TallerMapProvincias?.seleccionarSegunCodigo(
+                candidato.codigo_postal,
+                document.getElementById("admin-provincia")
+            );
+        }
+        mostrar(
+            "Candidato cargado como inactivo. Completa responsable, CIF, contacto, dirección, horarios y servicios; comprueba la fuente antes de publicarlo.",
+            "aviso"
+        );
+        editor.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function actualizarPaginacion() {
@@ -843,6 +937,20 @@
         cargarTalleres();
         lista.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+    document.getElementById("formulario-buscador-internet").addEventListener(
+        "submit",
+        buscarTalleresInternet
+    );
+    document.getElementById("resultados-buscador-internet").addEventListener(
+        "click",
+        (evento) => {
+            const boton = evento.target.closest("[data-accion-candidato='importar']");
+            if (!boton) return;
+            const id = boton.closest("[data-candidato-id]")?.dataset.candidatoId;
+            const candidato = candidatosInternet.find((elemento) => elemento.id === id);
+            if (candidato && !candidato.posible_duplicado) importarCandidato(candidato);
+        }
+    );
     document.getElementById("pagina-anterior").addEventListener("click", () => {
         if (pagina > 0) {
             pagina -= 1;

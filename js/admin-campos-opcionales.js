@@ -33,10 +33,12 @@
         return /^https?:\/\//i.test(texto) ? texto : `https://${texto}`;
     }
 
-    function hacerCamposOpcionales() {
-        formulario.querySelectorAll("[required]").forEach((campo) => {
-            campo.required = campo.id === "admin-nombre";
-        });
+    {
+    formulario.querySelectorAll("[required]").forEach((campo) => {
+        if (campo.id !== "admin-nombre") {
+            campo.removeAttribute("required");
+        }
+    });
     }
 
     function marcarEtiquetaOpcional(id) {

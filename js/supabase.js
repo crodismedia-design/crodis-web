@@ -219,7 +219,13 @@
                 .range(desde, hasta);
 
             if (poblacionActual) {
-                consulta = consulta.ilike("ciudad", `%${poblacionActual}%`);
+                const termino = `%${poblacionActual}%`;
+                consulta = consulta.or([
+                    `nombre.ilike.${termino}`,
+                    `ciudad.ilike.${termino}`,
+                    `provincia.ilike.${termino}`,
+                    `codigo_postal.ilike.${termino}`
+                ].join(","));
             }
             if (servicioActual && incluirServicios) {
                 consulta = consulta.contains("servicios", [servicioActual]);

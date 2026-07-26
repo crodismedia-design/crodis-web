@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../favicon.ico" sizes="any">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+    <link rel="manifest" href="../site.webmanifest">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Gestiona y actualiza tu taller publicado en TallerMap.">
+    <title>Gestionar mi taller | TallerMap</title>
+    <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body class="pagina-registro pagina-mi-taller">
+    <header class="cabecera">
+        <div class="contenedor cabecera-contenido">
+            <a href="../index.html" class="marca" aria-label="Volver al inicio de TallerMap">
+                <span class="marca-icono">TM</span>
+                <span class="marca-texto">
+                    <strong>TallerMap</strong>
+                    <small>Gestión del propietario</small>
+                </span>
+            </a>
+            <a href="../index.html" class="boton-enlace">Volver al inicio</a>
+        </div>
+    </header>
+
+    <main class="gestion-principal">
+        <section class="gestion-hero">
+            <div class="contenedor gestion-contenido">
+                <div class="gestion-introduccion">
+                    <span class="etiqueta">Área del propietario</span>
+                    <h1>Actualiza tu taller cuando lo necesites</h1>
+                    <p>Accede con el mismo correo que verificaste al publicar la ficha. Podrás modificar los datos visibles, servicios y horarios.</p>
+                    <ul class="registro-lista">
+                        <li>Acceso seguro mediante enlace enviado por correo.</li>
+                        <li>Los cambios aparecen al guardar y refrescar la página.</li>
+                        <li>El CIF, el correo y la verificación quedan protegidos.</li>
+                    </ul>
+                </div>
+
+                <section id="acceso-propietario" class="formulario-registro gestion-acceso">
+                    <div class="formulario-cabecera">
+                        <span>Acceder a mis talleres</span>
+                        <p>Usa el correo con el que publicaste el taller.</p>
+                    </div>
+                    <div id="mensaje-acceso" class="mensaje-formulario" role="status" aria-live="polite" hidden></div>
+                    <div class="campo-formulario">
+                        <label for="email-acceso">Correo electrónico *</label>
+                        <input id="email-acceso" type="email" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" required>
+                    </div>
+                    <button id="boton-acceso" class="boton boton-enviar" type="button">Recibir enlace de acceso</button>
+                </section>
+
+                <section id="panel-propietario" class="gestion-panel" hidden>
+                    <div class="gestion-sesion">
+                        <div>
+                            <strong>Sesión del propietario</strong>
+                            <span id="email-sesion"></span>
+                        </div>
+                        <button id="boton-cerrar-sesion" class="boton-enlace" type="button">Cerrar sesión</button>
+                    </div>
+
+                    <div id="mensaje-edicion" class="mensaje-formulario" role="status" aria-live="polite" hidden></div>
+
+                    <div id="sin-talleres" class="gestion-vacio" hidden>
+                        <h2>No hay talleres asociados a este correo</h2>
+                        <p>La ficha debe haberse publicado después de verificar este mismo correo.</p>
+                        <a class="boton" href="registro.html">Registrar un taller</a>
+                    </div>
+
+                    <form id="formulario-edicion" class="formulario-registro" novalidate hidden>
+                        <div class="formulario-cabecera gestion-cabecera-editor">
+                            <div>
+                                <span>Editar taller</span>
+                                <p>Los campos marcados con * son obligatorios.</p>
+                            </div>
+                            <div class="campo-formulario selector-taller" id="grupo-selector-taller" hidden>
+                                <label for="selector-taller">Taller que quieres editar</label>
+                                <select id="selector-taller"></select>
+                            </div>
+                        </div>
+
+                        <div class="formulario-grid">
+                            <div class="campo-formulario campo-ancho">
+                                <label for="nombre">Nombre del taller *</label>
+                                <input id="nombre" type="text" minlength="2" maxlength="120" autocomplete="organization" required>
+                            </div>
+
+                            <div class="campo-formulario">
+                                <label for="propietario">Propietario o responsable *</label>
+                                <input id="propietario" type="text" minlength="2" maxlength="120" autocomplete="name" required>
+                            </div>
+
+                            <div class="campo-formulario">
+                                <label for="telefono">Teléfono *</label>
+                                <input id="telefono" type="tel" minlength="9" maxlength="30" autocomplete="tel" inputmode="tel" required>
+                            </div>
+
+                            <div class="campo-formulario">
+                                <label for="cif-protegido">CIF o NIF</label>
+                                <input id="cif-protegido" type="text" disabled>
+                                <small class="campo-ayuda">Dato protegido. Para cambiarlo, contacta con TallerMap.</small>
+                            </div>
+
+                            <div class="campo-formulario">
+                                <label for="email-protegido">Correo verificado</label>
+                                <input id="email-protegido" type="email" disabled>
+                                <small class="campo-ayuda">Dato protegido para conservar la propiedad de la ficha.</small>
+                            </div>
+
+                            <div class="campo-formulario campo-ancho">
+                                <label for="web">Página web <span class="campo-opcional">(opcional)</span></label>
+                                <input id="web" type="url" maxlength="255" autocomplete="url" inputmode="url" placeholder="https://www.ejemplo.es">
+                            </div>
+
+                            <div class="campo-formulario campo-ancho">
+                                <label for="direccion">Dirección *</label>
+                                <input id="direccion" type="text" minlength="5" maxlength="255" autocomplete="street-address" required>
+                            </div>
+
+                            <div class="campo-formulario">
+                                <label for="codigo-postal">Código postal *</label>
+                                <input id="codigo-postal" type="text" pattern="[0-9]{5}" minlength="5" maxlength="5" inputmode="numeric" autocomplete="postal-code" required>
+                            </div>
+
+                            <div class="campo-formulario">
+                                <label for="ciudad">Población *</label>
+                                <input id="ciudad" type="text" minlength="2" maxlength="100" autocomplete="address-level2" list="localidades-edicion" required>
+                                <datalist id="localidades-edicion"></datalist>
+                            </div>
+
+                            <div class="campo-formulario campo-ancho">
+                                <label for="provincia-edicion">Provincia *</label>
+                                <select id="provincia-edicion" autocomplete="address-level1" required></select>
+                                <small id="estado-codigo-postal" class="campo-estado">Debe coincidir con los dos primeros dígitos del código postal.</small>
+                            </div>
+
+                            <fieldset class="campo-formulario campo-ancho horarios-formulario">
+                                <legend>Horario semanal *</legend>
+                                <p class="campo-ayuda">Indica un horario o selecciona «Cerrado» para cada día.</p>
+                                <div class="horarios-acciones">
+                                    <button id="copiar-horario-edicion" class="boton-enlace" type="button">Copiar el lunes de martes a viernes</button>
+                                    <button id="cerrar-fin-semana-edicion" class="boton-enlace" type="button">Marcar sábado y domingo como cerrados</button>
+                                </div>
+                                <div class="horarios-cabecera" aria-hidden="true">
+                                    <span>Día</span><span>Apertura</span><span>Cierre</span><span>2.ª apertura</span><span>2.º cierre</span>
+                                </div>
+                                <div id="lista-horarios-edicion" class="lista-horarios"></div>
+                            </fieldset>
+
+                            <fieldset class="campo-formulario campo-ancho servicios-formulario">
+                                <legend>Servicios principales *</legend>
+                                <p class="campo-ayuda">Selecciona al menos un servicio que ofrezca realmente el taller.</p>
+                                <div id="lista-servicios-edicion" class="servicios-opciones"></div>
+                            </fieldset>
+
+                            <div class="campo-formulario campo-ancho">
+                                <label for="descripcion">Descripción del taller *</label>
+                                <textarea id="descripcion" rows="6" minlength="10" maxlength="1500" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="gestion-aviso-fotos">
+                            Las fotografías actuales se conservarán. La gestión y sustitución de imágenes se incorporará desde una herramienta independiente.
+                        </div>
+
+                        <button id="boton-guardar" class="boton boton-enviar" type="submit">Guardar cambios</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="pie">
+        <div class="contenedor copyright">
+            <span>© 2026 TallerMap. Todos los derechos reservados.</span>
+            <span>Una plataforma de CRODIS Media</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/servicios.js"></script>
+    <script src="../js/provincias.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/mi-taller.js"></script>
+</body>
+</html>

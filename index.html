@@ -66,6 +66,30 @@
     </div>
 </header>
 
+<!-- Reloj digital debajo de la cabecera -->
+<section class="franja-reloj" aria-label="Hora y fecha actuales">
+    <div class="contenedor">
+        <div class="reloj-digital" id="reloj-digital" role="timer" aria-live="off">
+            <div class="reloj-digital-estado">
+                <span class="reloj-digital-punto" aria-hidden="true"></span>
+                <span>Hora local</span>
+            </div>
+
+            <div class="reloj-digital-hora" aria-hidden="true">
+                <span id="reloj-horas">--</span>
+                <span class="reloj-digital-separador">:</span>
+                <span id="reloj-minutos">--</span>
+                <span class="reloj-digital-separador">:</span>
+                <span id="reloj-segundos" class="reloj-digital-segundos">--</span>
+            </div>
+
+            <time id="reloj-fecha" class="reloj-digital-fecha" datetime="">
+                Cargando fecha...
+            </time>
+        </div>
+    </div>
+</section>
+
 <main>
 
     <section class="hero">
@@ -398,6 +422,60 @@
     </div>
 
 </footer>
+<script>
+(function iniciarRelojDigital() {
+    const reloj = document.getElementById("reloj-digital");
+    const horas = document.getElementById("reloj-horas");
+    const minutos = document.getElementById("reloj-minutos");
+    const segundos = document.getElementById("reloj-segundos");
+    const fecha = document.getElementById("reloj-fecha");
+
+    if (!reloj || !horas || !minutos || !segundos || !fecha) {
+        return;
+    }
+
+    const formatoFecha = new Intl.DateTimeFormat("es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    });
+
+    function dosDigitos(numero) {
+        return String(numero).padStart(2, "0");
+    }
+
+    function actualizarReloj() {
+        const ahora = new Date();
+        const horaActual = dosDigitos(ahora.getHours());
+        const minutoActual = dosDigitos(ahora.getMinutes());
+        const segundoActual = dosDigitos(ahora.getSeconds());
+        const fechaFormateada = formatoFecha.format(ahora);
+        const fechaVisible =
+            fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+
+        horas.textContent = horaActual;
+        minutos.textContent = minutoActual;
+        segundos.textContent = segundoActual;
+        fecha.textContent = fechaVisible;
+        fecha.dateTime = [
+            ahora.getFullYear(),
+            dosDigitos(ahora.getMonth() + 1),
+            dosDigitos(ahora.getDate())
+        ].join("-");
+
+        reloj.setAttribute(
+            "aria-label",
+            "Hora local " +
+                horaActual + ":" + minutoActual + ":" + segundoActual +
+                ". " + fechaVisible
+        );
+    }
+
+    actualizarReloj();
+    window.setInterval(actualizarReloj, 1000);
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/servicios.js"></script>
 <script src="js/supabase.js"></script>

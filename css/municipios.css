@@ -1,0 +1,151 @@
+.municipio-hero {
+    padding: 52px 0;
+    background:
+        radial-gradient(circle at top right, rgba(46, 204, 113, 0.14), transparent 34%),
+        linear-gradient(180deg, #ffffff, #f5f7f8);
+}
+
+.migas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 0.92rem;
+}
+
+.migas a {
+    text-decoration: none;
+}
+
+.municipio-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+    gap: 34px;
+    align-items: center;
+}
+
+.municipio-hero h1 {
+    margin: 12px 0 18px;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    line-height: 1.05;
+}
+
+.municipio-intro {
+    max-width: 800px;
+    font-size: 1.1rem;
+    line-height: 1.75;
+}
+
+.municipio-codigo {
+    display: inline-flex;
+    gap: 7px;
+    margin-top: 16px;
+    padding: 9px 14px;
+    border: 1px solid #d9e2e7;
+    border-radius: 999px;
+    background: #ffffff;
+}
+
+.municipio-panel {
+    padding: 26px;
+    border: 1px solid #dfe7eb;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.08);
+}
+
+.municipio-panel h2 {
+    margin-top: 0;
+}
+
+.municipio-buscador {
+    display: grid;
+    gap: 12px;
+}
+
+.municipio-buscador select,
+.municipio-filtro input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 13px;
+    border: 1px solid #ccd8df;
+    border-radius: 10px;
+    background: #ffffff;
+    font: inherit;
+}
+
+.municipio-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.municipio-info-grid article {
+    padding: 24px;
+    border: 1px solid #e0e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.municipio-faq details {
+    margin-bottom: 12px;
+    padding: 18px 20px;
+    border: 1px solid #dde5e9;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.municipio-faq summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.municipio-sin-talleres {
+    grid-column: 1 / -1;
+    padding: 38px;
+    text-align: center;
+    border: 1px dashed #bfcdd5;
+    border-radius: 18px;
+    background: #ffffff;
+}
+
+.municipio-filtro {
+    display: grid;
+    gap: 8px;
+    max-width: 620px;
+    margin-top: 24px;
+    font-weight: 700;
+}
+
+.lista-municipios {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lista-municipios a {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid #dfe7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    text-decoration: none;
+}
+
+.lista-municipios span {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+    .municipio-hero-grid,
+    .municipio-info-grid,
+    .lista-municipios {
+        grid-template-columns: 1fr;
+    }
+}

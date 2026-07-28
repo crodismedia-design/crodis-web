@@ -1,0 +1,3 @@
+Añade este enlace en el pie o menú de index.html:
+
+<a href="municipios/index.html">Talleres por municipio</a>

@@ -1626,3 +1626,13 @@ select {
     .horario-fila > strong { grid-column: 1 / -1; }
     .horario-fila label > span { color: #637084; display: block; font-size: .72rem; font-weight: 700; margin-bottom: 4px; }
 }
+/* Favicon utilizado como logotipo del encabezado */
+img.marca-icono-logo {
+    display: block;
+    object-fit: contain;
+    padding: 0;
+    background: #000;
+    border-radius: 14px;
+    box-shadow: 0 10px 22px rgba(57, 255, 20, 0.22);
+    flex: 0 0 auto;
+}

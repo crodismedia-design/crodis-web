@@ -4,14 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- aquí van las etiquetas SEO -->
- 
-</head>
-<head>
-   <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talleres mecánicos cerca de ti en España | TallerMap</title>
+    <meta name="description" content="Encuentra talleres mecánicos cerca de ti en España. Busca por población, código postal o servicio y consulta horarios, teléfono y especialidades.">
+    <meta name="author" content="TallerMap">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <link rel="canonical" href="https://www.tallermap.es/">
 
-    ...
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="TallerMap">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TallerMap">
+    <meta property="og:title" content="Talleres mecánicos cerca de ti | TallerMap">
+    <meta property="og:description" content="Encuentra talleres mecánicos en toda España por ciudad, código postal o servicio.">
+    <meta property="og:url" content="https://www.tallermap.es/">
+    <meta property="og:image" content="https://www.tallermap.es/images/tallermap-social.jpg">
+    <meta property="og:locale" content="es_ES">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TallerMap">
+    <meta name="twitter:description" content="Encuentra talleres mecánicos cerca de ti.">
+    <meta name="twitter:image" content="https://www.tallermap.es/images/tallermap-social.jpg">
 
     <link rel="stylesheet" href="css/estilo.css">
 
@@ -40,13 +58,13 @@
 
         <a href="#" class="marca">
             <img
-    class="marca-icono marca-icono-logo"
-    src="favicon.svg"
-    alt=""
-    aria-hidden="true"
-    width="46"
-    height="46"
->
+                class="marca-icono marca-icono-logo"
+                src="favicon.svg"
+                alt=""
+                aria-hidden="true"
+                width="46"
+                height="46"
+            >
 
             <span class="marca-texto">
                 <strong>TallerMap</strong>
@@ -72,7 +90,6 @@
     </div>
 </header>
 
-<!-- Reloj digital debajo de la cabecera -->
 <section class="franja-reloj" aria-label="Hora y fecha actuales">
     <div class="contenedor">
         <div class="reloj-digital" id="reloj-digital" role="timer" aria-live="off">
@@ -99,11 +116,9 @@
 <main>
 
     <section class="hero">
-
         <div class="contenedor hero-contenido">
 
             <div class="hero-texto">
-
                 <span class="etiqueta">
                     Más fácil, más rápido y cerca de ti
                 </span>
@@ -114,12 +129,11 @@
                 </h1>
 
                 <p class="hero-descripcion">
-                    Busca talleres mecánicos por localidad, servicio o marca.
-                    Consulta su información, horarios, valoraciones y solicita presupuesto.
+                    Busca talleres mecánicos por población, servicio o código postal.
+                    Consulta sus datos, horarios, especialidades y formas de contacto.
                 </p>
 
                 <form class="buscador" role="search">
-
                     <div class="campo-busqueda">
                         <span class="campo-icono">⌖</span>
 
@@ -164,7 +178,6 @@
                         Buscar talleres
                     </button>
                     <a href="pages/registro.html" class="boton boton-claro" style="margin-left: 10px;">Registrar taller</a>
-
                 </form>
 
                 <div class="busquedas-populares">
@@ -174,13 +187,10 @@
                     <a href="#talleres" data-servicio="chapa-pintura">Chapa y pintura</a>
                     <a href="#talleres" data-servicio="pre-itv">Pre-ITV</a>
                 </div>
-
             </div>
 
             <div class="hero-visual">
-
                 <div class="mapa-ficticio">
-
                     <div class="mapa-cabecera">
                         <div>
                             <strong>Talleres cercanos</strong>
@@ -209,7 +219,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div class="sello-confianza">
@@ -220,15 +229,12 @@
                         <small>Las fichas pueden revisarse y retirarse</small>
                     </div>
                 </div>
-
             </div>
 
         </div>
-
     </section>
 
     <section class="estadisticas" aria-label="Estadísticas reales de TallerMap">
-
         <div class="contenedor estadisticas-grid">
 
             <article>
@@ -252,11 +258,9 @@
             </article>
 
         </div>
-
     </section>
 
     <section id="servicios" class="seccion">
-
         <div class="contenedor">
 
             <div class="titulo-seccion">
@@ -273,15 +277,12 @@
             </div>
 
         </div>
-
     </section>
 
     <section id="talleres" class="seccion seccion-gris">
-
         <div class="contenedor">
 
             <div class="cabecera-seccion">
-
                 <div class="titulo-seccion alineado-izquierda">
                     <span>Directorio de talleres</span>
                     <h2>Talleres publicados</h2>
@@ -292,13 +293,10 @@
                 </div>
 
                 <span class="orden-talleres">Talleres ordenados por fecha de alta</span>
-
             </div>
 
             <div class="talleres-grid" id="lista-talleres">
-
                 <p class="mensaje-talleres">Cargando talleres...</p>
-
             </div>
 
             <div id="contenedor-cargar-mas" class="cargar-mas-contenedor" hidden>
@@ -306,11 +304,9 @@
             </div>
 
         </div>
-
     </section>
 
     <section id="como-funciona" class="seccion">
-
         <div class="contenedor">
 
             <div class="titulo-seccion">
@@ -319,7 +315,6 @@
             </div>
 
             <div class="pasos-grid">
-
                 <article>
                     <span class="numero-paso">01</span>
                     <h3>Filtra la búsqueda</h3>
@@ -337,15 +332,12 @@
                     <h3>Llama si hay teléfono</h3>
                     <p>Cuando el taller facilita un número, TallerMap muestra un enlace para llamar directamente.</p>
                 </article>
-
             </div>
 
         </div>
-
     </section>
 
     <section id="registrar" class="cta cta-cartel">
-
         <div class="contenedor cta-cartel-contenido">
 
             <a class="cta-cartel-imagen" href="pages/registro.html" aria-label="Registrar mi taller gratuitamente">
@@ -368,25 +360,23 @@
             </div>
 
         </div>
-
     </section>
 
 </main>
 
 <footer class="pie">
-
     <div class="contenedor pie-grid">
 
         <div>
             <a href="#" class="marca marca-pie">
                 <img
-    class="marca-icono marca-icono-logo"
-    src="favicon.svg"
-    alt=""
-    aria-hidden="true"
-    width="46"
-    height="46"
->
+                    class="marca-icono marca-icono-logo"
+                    src="favicon.svg"
+                    alt=""
+                    aria-hidden="true"
+                    width="46"
+                    height="46"
+                >
                 <span class="marca-texto">
                     <strong>TallerMap</strong>
                     <small>Talleres cerca de ti</small>
@@ -402,7 +392,7 @@
         <div>
             <h3>TallerMap</h3>
             <a href="#">Buscar talleres</a>
-            <a href="#">Servicios</a>
+            <a href="#servicios">Servicios</a>
             <a href="#talleres">Talleres publicados</a>
         </div>
 
@@ -426,8 +416,8 @@
         <span>© 2026 TallerMap. Todos los derechos reservados.</span>
         <span>Una plataforma de CRODIS Media</span>
     </div>
-
 </footer>
+
 <script>
 (function iniciarRelojDigital() {
     const reloj = document.getElementById("reloj-digital");
@@ -482,6 +472,7 @@
     window.setInterval(actualizarReloj, 1000);
 })();
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/servicios.js"></script>
 <script src="js/supabase.js"></script>

@@ -78,10 +78,11 @@
                         </div>
 
                         <div class="campo-formulario">
-                            <label for="ciudad">Ciudad *</label>
-                            <input id="ciudad" name="ciudad" type="text" minlength="2" maxlength="100" autocomplete="address-level2" list="localidades-codigo-postal" aria-describedby="estado-localidad" required>
+                            <label for="ciudad">Población *</label>
+                            <input id="ciudad" name="ciudad" type="text" minlength="2" maxlength="100" autocomplete="address-level2" list="municipios-supabase" aria-describedby="estado-localidad" required>
+                            <datalist id="municipios-supabase"></datalist>
                             <datalist id="localidades-codigo-postal"></datalist>
-                            <small id="estado-localidad" class="campo-estado" aria-live="polite">Escribe primero el código postal para comprobar las poblaciones correspondientes.</small>
+                            <small id="estado-localidad" class="campo-estado" aria-live="polite">Escribe primero el código postal y selecciona la población correspondiente.</small>
                         </div>
 
                         <div class="campo-formulario campo-ancho">
@@ -174,6 +175,7 @@
     <script src="../js/servicios.js"></script>
     <script src="../js/provincias.js"></script>
     <script src="../js/supabase.js"></script>
+    <script src="../js/municipios-formulario.js"></script>
     <script src="../js/registro.js"></script>
 </body>
 </html>

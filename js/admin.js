@@ -1,4 +1,4 @@
-(function () {
+function () {
     "use strict";
 
     const lista = document.getElementById("lista-solicitudes");
@@ -404,22 +404,55 @@
     }
 
     function tarjetaCandidato(candidato) {
-        const contacto = [candidato.telefono, candidato.email]
-            .filter(Boolean)
-            .join(" · ");
+        const ubicacion = [
+            candidato.direccion,
+            candidato.codigo_postal,
+            candidato.ciudad,
+            candidato.provincia
+        ].filter(Boolean).join(", ");
+        const coordenadas = Number.isFinite(Number(candidato.latitud))
+            && Number.isFinite(Number(candidato.longitud))
+            ? `${Number(candidato.latitud).toFixed(6)}, ${Number(candidato.longitud).toFixed(6)}`
+            : "";
+        const web = normalizarWeb(candidato.web);
+        const servicios = Array.isArray(candidato.servicios_externos)
+            ? candidato.servicios_externos.filter(Boolean).join(", ")
+            : "";
+        const redes = Array.isArray(candidato.redes_sociales)
+            ? candidato.redes_sociales.filter((red) => red?.url)
+            : [];
+        const camposDisponibles = [
+            ubicacion, candidato.telefono, candidato.email, web,
+            candidato.horario_externo, candidato.categoria, candidato.marca,
+            candidato.descripcion_externa, servicios, coordenadas
+        ].filter(Boolean).length;
+        const dato = (etiqueta, contenido, alternativo = "No disponible") =>
+            `<p><strong>${escaparHtml(etiqueta)}:</strong> ${escaparHtml(contenido || alternativo)}</p>`;
+    
         return `<article class="admin-candidato${candidato.posible_duplicado ? " admin-candidato-duplicado" : ""}" data-candidato-id="${escaparHtml(candidato.id)}">
             <div>
-                <span class="admin-candidato-estado">${candidato.posible_duplicado ? "Posible duplicado" : "Candidato nuevo"}</span>
+                <span class="admin-candidato-estado">${candidato.posible_duplicado ? "Posible duplicado" : "Candidato nuevo"} · ${camposDisponibles}/10 datos localizados</span>
                 <h3>${escaparHtml(candidato.nombre)}</h3>
-                <p>${escaparHtml([
-                    candidato.direccion,
-                    candidato.codigo_postal,
-                    candidato.ciudad,
-                    candidato.provincia
-                ].filter(Boolean).join(", ") || "Ubicación aproximada")}</p>
-                ${contacto ? `<p>${escaparHtml(contacto)}</p>` : ""}
-                ${candidato.web ? `<p><a href="${escaparHtml(candidato.web)}" target="_blank" rel="noopener noreferrer">Visitar su web</a></p>` : ""}
-                ${candidato.horario_externo ? `<p><strong>Horario externo:</strong> ${escaparHtml(candidato.horario_externo)}</p>` : ""}
+                ${dato("Dirección", ubicacion, "Ubicación aproximada")}
+                ${dato("Categoría", candidato.categoria)}
+                ${dato("Teléfono", candidato.telefono)}
+                ${dato("Correo", candidato.email)}
+                ${web
+                    ? `<p><strong>Web:</strong> <a href="${escaparHtml(web)}" target="_blank" rel="noopener noreferrer">${escaparHtml(web)}</a></p>`
+                    : dato("Web", "")}
+                ${dato("Horario", candidato.horario_externo)}
+                ${candidato.marca ? dato("Marca", candidato.marca) : ""}
+                ${candidato.operador ? dato("Operador", candidato.operador) : ""}
+                ${candidato.descripcion_externa ? dato("Descripción externa", candidato.descripcion_externa) : ""}
+                ${servicios ? dato("Servicios indicados", servicios) : ""}
+                ${candidato.accesibilidad ? dato("Accesibilidad", candidato.accesibilidad) : ""}
+                ${coordenadas ? dato("Coordenadas", coordenadas) : ""}
+                ${redes.length
+                    ? `<p><strong>Redes:</strong> ${redes.map((red) => {
+                        const url = normalizarWeb(red.url);
+                        return `<a href="${escaparHtml(url)}" target="_blank" rel="noopener noreferrer">${escaparHtml(red.nombre)}</a>`;
+                    }).join(" · ")}</p>`
+                    : ""}
             </div>
             <div class="admin-candidato-acciones">
                 <a class="boton-enlace" href="${escaparHtml(candidato.fuente)}" target="_blank" rel="noopener noreferrer">Comprobar fuente</a>
@@ -478,7 +511,15 @@
         document.getElementById("admin-codigo-postal").value = candidato.codigo_postal || "";
         document.getElementById("admin-ciudad").value = candidato.ciudad || "";
         document.getElementById("admin-descripcion").value =
-            "Ficha incorporada desde una fuente pública. Datos pendientes de comprobación administrativa.";
+            candidato.descripcion_externa
+            || [
+                candidato.categoria,
+                candidato.marca ? `Marca: ${candidato.marca}` : "",
+                Array.isArray(candidato.servicios_externos) && candidato.servicios_externos.length
+                    ? `Servicios indicados: ${candidato.servicios_externos.join(", ")}`
+                    : ""
+            ].filter(Boolean).join(". ")
+            || "Ficha incorporada desde una fuente pública. Datos pendientes de comprobación administrativa.";
         document.getElementById("admin-activo").checked = false;
         document.getElementById("admin-verificado").checked = false;
         cargarServicios(["mecanica-general"]);
@@ -487,6 +528,13 @@
                 candidato.codigo_postal,
                 document.getElementById("admin-provincia")
             );
+        } else if (candidato.provincia) {
+            const provincia = document.getElementById("admin-provincia");
+            const opcion = Array.from(provincia.options).find((elemento) =>
+                normalizar(elemento.textContent) === normalizar(candidato.provincia)
+                || normalizar(elemento.value) === normalizar(candidato.provincia)
+            );
+            if (opcion) provincia.value = opcion.value;
         }
         mostrar(
             "Candidato cargado como inactivo. Completa teléfono, dirección, horarios y servicios; comprueba la fuente antes de publicarlo.",
@@ -1006,3 +1054,4 @@
         await cargarHistorial();
     }());
 }());
+

@@ -20,11 +20,14 @@
         "aire-acondicionado": "Aire acondicionado",
         "hibridos-electricos": "Híbridos y eléctricos"
     };
+
     const TAMANO_PAGINA = 30;
+    const RADIOS_CERCANOS_KM = [5, 10, 25, 50];
     let siguienteIndice = 0;
     let poblacionActual = "";
     let servicioActual = "";
     let cargandoTalleres = false;
+    let modoUbicacion = false;
 
     function escaparHTML(valor) {
         const elemento = document.createElement("div");
@@ -69,6 +72,16 @@
             : "";
     }
 
+    function distanciaHtml(distanciaKm) {
+        const distancia = Number(distanciaKm);
+        if (!Number.isFinite(distancia) || distancia < 0) return "";
+        const texto = new Intl.NumberFormat("es-ES", {
+            minimumFractionDigits: distancia < 10 ? 1 : 0,
+            maximumFractionDigits: distancia < 10 ? 1 : 0
+        }).format(distancia);
+        return `<p class="ubicacion"><strong>A ${texto} km de tu ubicación</strong></p>`;
+    }
+
     function crearTarjetaTaller(taller) {
         const nombre = escaparHTML(taller.nombre || taller.nombre_taller || "Taller sin nombre");
         const ciudad = escaparHTML(taller.ciudad || "");
@@ -86,7 +99,9 @@
         const servicios = Array.isArray(taller.servicios) ? taller.servicios : [];
         const etiquetas = servicios.length ? servicios.slice(0, 4) : ["Taller mecánico"];
         const horario = horarioHtml(taller.horarios);
+        const distancia = distanciaHtml(taller.distancia_km);
         const enlaces = [];
+
         if (telefono) {
             enlaces.push(`<a href="tel:${escaparHTML(telefono)}" aria-label="Llamar a ${nombre}">Llamar</a>`);
         }
@@ -108,6 +123,7 @@
                     <div class="valoracion">★ Nuevo <span>Ficha publicada</span></div>
                     <h3>${nombre}</h3>
                     <p class="ubicacion">⌖ ${ubicacion || "Ubicación no indicada"}</p>
+                    ${distancia}
                     <p class="taller-descripcion">${descripcion}</p>
                     <div class="especialidades">
                         ${etiquetas.map((servicio) => `<span>${escaparHTML(etiquetaServicio(servicio))}</span>`).join("")}
@@ -158,7 +174,7 @@
         const boton = document.getElementById("boton-cargar-mas");
         if (!contenedorBoton || !boton) return;
 
-        contenedorBoton.hidden = !hayMas;
+        contenedorBoton.hidden = modoUbicacion || !hayMas;
         boton.disabled = cargando;
         boton.textContent = cargando ? "Cargando talleres..." : "Cargar más talleres";
     }
@@ -190,6 +206,7 @@
         const contenedor = document.getElementById("lista-talleres");
         if (!contenedor || cargandoTalleres) return;
 
+        modoUbicacion = false;
         if (reiniciar) {
             siguienteIndice = 0;
             poblacionActual = terminoSeguro(poblacion);
@@ -234,8 +251,6 @@
         }
 
         try {
-            // Compatibilidad con instalaciones que todavía no tienen las columnas
-            // opcionales de servicios o fotografías.
             let incluirServicios = true;
             let incluirFotos = true;
             let incluirHorarios = true;
@@ -295,10 +310,69 @@
         }
     }
 
-    function actualizarNumeroResultados(total) {
+    async function cargarTalleresCercanos(latitud, longitud, servicio = "") {
+        const contenedor = document.getElementById("lista-talleres");
+        if (!contenedor || cargandoTalleres) return null;
+
+        modoUbicacion = true;
+        siguienteIndice = 0;
+        poblacionActual = "";
+        servicioActual = servicio;
+        cargandoTalleres = true;
+        mostrarEstado(contenedor, "Calculando talleres cercanos...");
+        actualizarBotonCarga(false);
+
+        try {
+            let talleres = [];
+            let radioUtilizado = RADIOS_CERCANOS_KM.at(-1);
+
+            for (const radio of RADIOS_CERCANOS_KM) {
+                const { data, error } = await supabaseClient.rpc("buscar_talleres_cercanos", {
+                    p_latitud: latitud,
+                    p_longitud: longitud,
+                    p_radio_km: radio,
+                    p_servicio: servicio || null,
+                    p_limite: 50
+                });
+
+                if (error) throw error;
+                talleres = Array.isArray(data) ? data : [];
+                radioUtilizado = radio;
+                if (talleres.length) break;
+            }
+
+            if (!talleres.length) {
+                mostrarEstado(
+                    contenedor,
+                    "No encontramos talleres con coordenadas en un radio de 50 km. Puedes buscar por población."
+                );
+                actualizarNumeroResultados(0, "0 cercanos");
+                return { total: 0, radio: radioUtilizado };
+            }
+
+            const talleresConFotos = await adjuntarFotosFirmadas(talleres);
+            contenedor.innerHTML = talleresConFotos.map(crearTarjetaTaller).join("");
+            actualizarNumeroResultados(talleres.length, `${talleres.length} por cercanía`);
+            return { total: talleres.length, radio: radioUtilizado };
+        } catch (error) {
+            console.error("No se pudieron buscar talleres cercanos:", error);
+            mostrarEstado(
+                contenedor,
+                "No se pudo calcular la distancia. Comprueba la función buscar_talleres_cercanos en Supabase."
+            );
+            actualizarNumeroResultados(0);
+            return null;
+        } finally {
+            cargandoTalleres = false;
+            actualizarBotonCarga(false);
+        }
+    }
+
+    function actualizarNumeroResultados(total, textoPersonalizado = "") {
         const indicador = document.querySelector(".mapa-estado");
         if (indicador) {
-            indicador.textContent = `${total} ${total === 1 ? "disponible" : "disponibles"}`;
+            indicador.textContent = textoPersonalizado
+                || `${total} ${total === 1 ? "disponible" : "disponibles"}`;
         }
     }
 
@@ -326,53 +400,54 @@
                     return;
                 }
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: false,
-                    timeout: 12000,
-                    maximumAge: 300000
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 120000
                 });
             });
         }
 
-        async function detectarPoblacion() {
-            if (!botonUbicacion || !campoPoblacion) return;
+        async function buscarDesdeMiUbicacion() {
+            if (!botonUbicacion) return;
 
             botonUbicacion.disabled = true;
             botonUbicacion.textContent = "Localizando…";
-            escribirEstadoUbicacion("Solicitando permiso para conocer tu ubicación…");
+            escribirEstadoUbicacion("Solicitando permiso y calculando distancias reales…");
 
             try {
                 const posicion = await obtenerPosicionActual();
-                const parametros = new URLSearchParams({
-                    latitude: String(posicion.coords.latitude),
-                    longitude: String(posicion.coords.longitude),
-                    localityLanguage: "es"
-                });
-                const respuesta = await fetch(
-                    `https://api.bigdatacloud.net/data/reverse-geocode-client?${parametros}`,
-                    { headers: { Accept: "application/json" } }
-                );
-                if (!respuesta.ok) throw new Error("geocodificacion-no-disponible");
-
-                const lugar = await respuesta.json();
-                if (lugar.countryCode && lugar.countryCode !== "ES") {
-                    throw new Error("fuera-de-espana");
+                const latitud = Number(posicion.coords.latitude);
+                const longitud = Number(posicion.coords.longitude);
+                if (!Number.isFinite(latitud) || !Number.isFinite(longitud)) {
+                    throw new Error("coordenadas-no-validas");
                 }
 
-                const poblacion = String(lugar.city || lugar.locality || "").trim();
-                if (!poblacion) throw new Error("poblacion-no-encontrada");
+                if (campoPoblacion) campoPoblacion.value = "";
+                const resultado = await cargarTalleresCercanos(
+                    latitud,
+                    longitud,
+                    campoServicio?.value || ""
+                );
+                document.getElementById("talleres")?.scrollIntoView({ behavior: "smooth" });
 
-                campoPoblacion.value = poblacion;
-                escribirEstadoUbicacion(`Ubicación detectada: ${poblacion}. Buscando talleres…`);
-                formularioBusqueda?.requestSubmit();
+                if (resultado?.total) {
+                    escribirEstadoUbicacion(
+                        `${resultado.total} ${resultado.total === 1 ? "taller encontrado" : "talleres encontrados"} a menos de ${resultado.radio} km, ordenados por distancia.`
+                    );
+                } else if (resultado) {
+                    escribirEstadoUbicacion(
+                        "No hay talleres con coordenadas a menos de 50 km. Prueba la búsqueda por población.",
+                        true
+                    );
+                } else {
+                    escribirEstadoUbicacion("No se pudo completar la búsqueda por distancia.", true);
+                }
             } catch (error) {
                 const permisoDenegado = error?.code === 1;
-                const fueraDeEspana = error?.message === "fuera-de-espana";
                 escribirEstadoUbicacion(
-                    fueraDeEspana
-                        ? "La búsqueda automática está disponible actualmente en España."
-                        : permisoDenegado
-                            ? "No has permitido acceder a tu ubicación. Escribe la población manualmente."
-                            : "No se pudo detectar tu población. Puedes escribirla manualmente.",
+                    permisoDenegado
+                        ? "No has permitido acceder a tu ubicación. Puedes escribir la población manualmente."
+                        : "No se pudo obtener tu ubicación. Puedes escribir la población manualmente.",
                     true
                 );
             } finally {
@@ -387,10 +462,10 @@
             document.getElementById("talleres")?.scrollIntoView({ behavior: "smooth" });
         });
 
-        botonUbicacion?.addEventListener("click", detectarPoblacion);
+        botonUbicacion?.addEventListener("click", buscarDesdeMiUbicacion);
 
         botonCargarMas?.addEventListener("click", () => {
-            cargarTalleres(poblacionActual, servicioActual, false);
+            if (!modoUbicacion) cargarTalleres(poblacionActual, servicioActual, false);
         });
 
         document.querySelectorAll("[data-servicio]").forEach((enlace) => {
